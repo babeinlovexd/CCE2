@@ -11,6 +11,8 @@ A complete, standalone Python desktop GUI application for worldbuilders, fantasy
 - **Astronomy:** Track suns (binary/trinary systems) and calculate dynamic moon phases for any number of moons.
 - **Story Event Tracking:** Create, edit, and search through story events attached to specific days. Includes real-time search filtering.
 - **Portable Saves:** Everything is saved into a single, easily portable `.worldcal` (JSON) project file.
+- **Modern Dark Theme UI:** Designed for clarity with categorized settings and tooltips.
+- **Bilingual:** Fully supports English and German natively.
 
 ---
 
@@ -38,19 +40,21 @@ python main.py
 
 You can easily package this application into a standalone `.exe` file for Windows (or a binary for Linux/Mac) so that end-users do not need Python installed.
 
-### 1. Install PyInstaller
-```bash
-pip install pyinstaller
-```
-*(Windows alternative: `py -m pip install pyinstaller`)*
+### Windows (Automated)
+Just double-click the **`build.bat`** file in the folder!
+It automatically uses `py -m pip` to install dependencies and PyInstaller, and then generates the `.exe` for you without any path issues.
 
-### 2. Run the Build Script
-A convenience script `build.sh` is provided. Alternatively, run the command manually:
+### Mac/Linux (Automated)
+Run the shell script in your terminal:
+```bash
+./build.sh
+```
+
+### Manual Build
+If you want to run it manually:
 ```bash
 pyinstaller --noconsole --onefile --windowed --name="CustomCalendarEngine" main.py
 ```
-- `--noconsole` and `--windowed` ensure no black command prompt window appears behind the GUI.
-- `--onefile` packs everything into a single, clean executable.
 
 ### 3. Find your Executable
 After the build finishes, your standalone application will be located in the newly created `dist/` folder as `CustomCalendarEngine.exe`.
