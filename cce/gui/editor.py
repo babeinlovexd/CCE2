@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
+from PyQt6.QtWidgets import (QWidget, QGroupBox, QVBoxLayout, QHBoxLayout, QLabel,
                              QPushButton, QTabWidget, QLineEdit, QFormLayout,
                              QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox,
                              QFileDialog, QMessageBox, QComboBox)
@@ -6,6 +6,7 @@ from PyQt6.QtCore import Qt
 
 from cce.core.models import TimeUnit, Planet, Era, Month, Weekday, Holiday, LeapRule, Sun, Moon
 from cce.core.storage import save_world, load_world
+from .translations import translator
 
 class EditorWidget(QWidget):
     def __init__(self, main_window):
@@ -15,9 +16,10 @@ class EditorWidget(QWidget):
 
         # Top Bar
         top_bar = QHBoxLayout()
-        self.btn_save = QPushButton("Save Project")
-        self.btn_open = QPushButton("Open Project")
-        self.btn_generate = QPushButton("🚀 Generate Calendar & Open Viewer")
+        self.btn_save = QPushButton(translator.t("btn_save"))
+        self.btn_open = QPushButton(translator.t("btn_open"))
+        self.btn_generate = QPushButton(translator.t("btn_generate"))
+        self.btn_generate.setObjectName("primaryAction")
 
         self.btn_save.clicked.connect(self.save_project)
         self.btn_open.clicked.connect(self.open_project)
@@ -26,6 +28,7 @@ class EditorWidget(QWidget):
         top_bar.addWidget(self.btn_open)
         top_bar.addWidget(self.btn_save)
         top_bar.addStretch()
+        self.btn_generate.setMinimumHeight(35)
         top_bar.addWidget(self.btn_generate)
 
         self.layout.addLayout(top_bar)
@@ -39,11 +42,11 @@ class EditorWidget(QWidget):
         self.tab_holidays = QWidget()
         self.tab_astronomy = QWidget()
 
-        self.tabs.addTab(self.tab_world, "World & Units")
-        self.tabs.addTab(self.tab_planets, "Planets & Orbit")
-        self.tabs.addTab(self.tab_calendar, "Eras, Months & Weekdays")
-        self.tabs.addTab(self.tab_holidays, "Holidays & Leap Rules")
-        self.tabs.addTab(self.tab_astronomy, "Suns & Moons")
+        self.tabs.addTab(self.tab_world, translator.t("tab_world"))
+        self.tabs.addTab(self.tab_planets, translator.t("tab_planets"))
+        self.tabs.addTab(self.tab_calendar, translator.t("tab_calendar"))
+        self.tabs.addTab(self.tab_holidays, translator.t("tab_holidays"))
+        self.tabs.addTab(self.tab_astronomy, translator.t("tab_astronomy"))
 
         self.layout.addWidget(self.tabs)
 
@@ -93,31 +96,45 @@ class EditorWidget(QWidget):
     # --- World & Units ---
     def setup_world_tab(self):
         layout = QVBoxLayout(self.tab_world)
-        form = QFormLayout()
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(20)
+
+        # Group 1: Basics
+        group_basics = QGroupBox(translator.t("tab_world"))
+        form = QFormLayout(group_basics)
+        form.setSpacing(15)
 
         self.world_name_input = QLineEdit()
         self.base_tick_input = QLineEdit()
 
-        form.addRow("World Name:", self.world_name_input)
-        form.addRow("Base Tick Name:", self.base_tick_input)
+        form.addRow(translator.t("world_name"), self.world_name_input)
+        form.addRow(translator.t("base_tick_name"), self.base_tick_input)
+        layout.addWidget(group_basics)
 
-        layout.addLayout(form)
+        # Group 2: Time Units
+        group_units = QGroupBox(translator.t("time_units_lbl"))
+        unit_layout = QVBoxLayout(group_units)
 
-        layout.addWidget(QLabel("Time Units (e.g. Second, Minute, Hour, Watch)"))
         self.units_table = QTableWidget(0, 3)
-        self.units_table.setHorizontalHeaderLabels(["Name", "Abbreviation", "Ticks"])
+        self.units_table.setHorizontalHeaderLabels([translator.t("col_name"), translator.t("col_abbrev"), translator.t("col_ticks")])
         self.units_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
-        layout.addWidget(self.units_table)
+        self.units_table.setAlternatingRowColors(True)
+        unit_layout.addWidget(self.units_table)
 
         btn_layout = QHBoxLayout()
-        btn_add_unit = QPushButton("Add Unit")
+        btn_add_unit = QPushButton(translator.t("btn_add_unit"))
         btn_add_unit.clicked.connect(self.add_time_unit)
-        btn_del_unit = QPushButton("Remove Selected")
+        btn_del_unit = QPushButton(translator.t("btn_del_unit"))
         btn_del_unit.clicked.connect(self.remove_time_unit)
 
         btn_layout.addWidget(btn_add_unit)
         btn_layout.addWidget(btn_del_unit)
-        layout.addLayout(btn_layout)
+        unit_layout.addLayout(btn_layout)
+        layout.addWidget(group_units)
+
+        self.world_name_input.setToolTip(translator.t("tt_world_name"))
+        self.base_tick_input.setToolTip(translator.t("tt_base_tick"))
+        self.units_table.setToolTip(translator.t("tt_time_units"))
 
         self.units_table.itemChanged.connect(self.update_time_units)
 
@@ -154,22 +171,29 @@ class EditorWidget(QWidget):
     # --- Planets ---
     def setup_planets_tab(self):
         layout = QVBoxLayout(self.tab_planets)
+        layout.setContentsMargins(20, 20, 20, 20)
+
+        group = QGroupBox(translator.t("tab_planets"))
+        group_layout = QVBoxLayout(group)
 
         self.planets_table = QTableWidget(0, 4)
-        self.planets_table.setHorizontalHeaderLabels(["Name", "Day Length (Ticks)", "Year Length (Days)", "Is Primary"])
+        self.planets_table.setHorizontalHeaderLabels([translator.t("col_name"), translator.t("col_day_length"), translator.t("col_year_length"), translator.t("col_is_primary")])
         self.planets_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
-        layout.addWidget(self.planets_table)
+        self.planets_table.setAlternatingRowColors(True)
+        self.planets_table.setToolTip(translator.t("tt_day_length") + " | " + translator.t("tt_year_length") + " | " + translator.t("tt_is_primary"))
+        group_layout.addWidget(self.planets_table)
 
         btn_layout = QHBoxLayout()
-        btn_add = QPushButton("Add Planet")
+        btn_add = QPushButton(translator.t("btn_add_planet"))
         btn_add.clicked.connect(self.add_planet)
-        btn_del = QPushButton("Remove Selected")
+        btn_del = QPushButton(translator.t("btn_del_planet"))
         btn_del.clicked.connect(self.remove_planet)
 
         btn_layout.addWidget(btn_add)
         btn_layout.addWidget(btn_del)
-        layout.addLayout(btn_layout)
+        group_layout.addLayout(btn_layout)
 
+        layout.addWidget(group)
         self.planets_table.itemChanged.connect(self.update_planets)
 
     def populate_planets(self):
@@ -220,43 +244,51 @@ class EditorWidget(QWidget):
     # --- Calendar (Eras, Months, Weekdays) ---
     def setup_calendar_tab(self):
         layout = QHBoxLayout(self.tab_calendar)
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(15)
 
         # Eras
-        era_layout = QVBoxLayout()
-        era_layout.addWidget(QLabel("Eras"))
+        group_era = QGroupBox(translator.t("lbl_eras"))
+        era_layout = QVBoxLayout(group_era)
         self.era_table = QTableWidget(0, 4)
-        self.era_table.setHorizontalHeaderLabels(["Name", "Abbrev", "Start Year", "Inc Yr 0"])
+        self.era_table.setHorizontalHeaderLabels([translator.t("col_name"), translator.t("col_abbrev"), translator.t("col_start_year"), translator.t("col_inc_yr_0")])
+        self.era_table.setAlternatingRowColors(True)
+        self.era_table.setToolTip(translator.t("tt_eras"))
         era_layout.addWidget(self.era_table)
-        btn_add_era = QPushButton("Add Era")
+        btn_add_era = QPushButton(translator.t("btn_add_era"))
         btn_add_era.clicked.connect(lambda: (self.main_window.world.eras.append(Era(name="New Era")), self.populate_eras()))
         era_layout.addWidget(btn_add_era)
         self.era_table.itemChanged.connect(self.update_eras)
 
         # Months
-        month_layout = QVBoxLayout()
-        month_layout.addWidget(QLabel("Months / Seasons"))
+        group_month = QGroupBox(translator.t("lbl_months"))
+        month_layout = QVBoxLayout(group_month)
         self.month_table = QTableWidget(0, 3)
-        self.month_table.setHorizontalHeaderLabels(["Name", "Days", "Color"])
+        self.month_table.setHorizontalHeaderLabels([translator.t("col_name"), translator.t("col_days"), translator.t("col_color")])
+        self.month_table.setAlternatingRowColors(True)
+        self.month_table.setToolTip(translator.t("tt_months"))
         month_layout.addWidget(self.month_table)
-        btn_add_month = QPushButton("Add Month")
+        btn_add_month = QPushButton(translator.t("btn_add_month"))
         btn_add_month.clicked.connect(lambda: (self.main_window.world.months.append(Month(name="New Month")), self.populate_months()))
         month_layout.addWidget(btn_add_month)
         self.month_table.itemChanged.connect(self.update_months)
 
         # Weekdays
-        weekday_layout = QVBoxLayout()
-        weekday_layout.addWidget(QLabel("Weekdays"))
+        group_wd = QGroupBox(translator.t("lbl_weekdays"))
+        weekday_layout = QVBoxLayout(group_wd)
         self.weekday_table = QTableWidget(0, 1)
-        self.weekday_table.setHorizontalHeaderLabels(["Name"])
+        self.weekday_table.setHorizontalHeaderLabels([translator.t("col_name")])
+        self.weekday_table.setAlternatingRowColors(True)
+        self.weekday_table.setToolTip(translator.t("tt_weekdays"))
         weekday_layout.addWidget(self.weekday_table)
-        btn_add_wd = QPushButton("Add Weekday")
+        btn_add_wd = QPushButton(translator.t("btn_add_wd"))
         btn_add_wd.clicked.connect(lambda: (self.main_window.world.weekdays.append(Weekday(name="New Day")), self.populate_weekdays()))
         weekday_layout.addWidget(btn_add_wd)
         self.weekday_table.itemChanged.connect(self.update_weekdays)
 
-        layout.addLayout(era_layout)
-        layout.addLayout(month_layout)
-        layout.addLayout(weekday_layout)
+        layout.addWidget(group_era)
+        layout.addWidget(group_month)
+        layout.addWidget(group_wd)
 
     def populate_eras(self):
         self.era_table.blockSignals(True)
@@ -319,28 +351,38 @@ class EditorWidget(QWidget):
     # --- Holidays & Leap Rules ---
     def setup_holidays_tab(self):
         layout = QVBoxLayout(self.tab_holidays)
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(15)
 
         # Holidays
-        layout.addWidget(QLabel("Holidays"))
+        group_hol = QGroupBox(translator.t("lbl_holidays"))
+        hol_layout = QVBoxLayout(group_hol)
         self.holiday_table = QTableWidget(0, 4)
-        self.holiday_table.setHorizontalHeaderLabels(["Name", "Month (Leave blank for inter-month)", "Day in Month", "Counts as Weekday"])
         self.holiday_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
-        layout.addWidget(self.holiday_table)
-        btn_add_hol = QPushButton("Add Holiday")
+        self.holiday_table.setAlternatingRowColors(True)
+        self.holiday_table.setHorizontalHeaderLabels([translator.t("col_name"), translator.t("col_month_opt"), translator.t("col_day_in_month"), translator.t("col_counts_wd")])
+        self.holiday_table.setToolTip(translator.t("tt_holidays"))
+        hol_layout.addWidget(self.holiday_table)
+        btn_add_hol = QPushButton(translator.t("btn_add_hol"))
         btn_add_hol.clicked.connect(lambda: (self.main_window.world.holidays.append(Holiday(name="New Holiday")), self.populate_holidays()))
-        layout.addWidget(btn_add_hol)
+        hol_layout.addWidget(btn_add_hol)
         self.holiday_table.itemChanged.connect(self.update_holidays)
+        layout.addWidget(group_hol)
 
         # Leap Rules
-        layout.addWidget(QLabel("Leap Rules"))
+        group_leap = QGroupBox(translator.t("lbl_leap"))
+        leap_layout = QVBoxLayout(group_leap)
         self.leap_table = QTableWidget(0, 5)
-        self.leap_table.setHorizontalHeaderLabels(["Interval (Years)", "Month ID to Append", "Days to Add", "Exception Interval", "Exception Days"])
         self.leap_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
-        layout.addWidget(self.leap_table)
-        btn_add_leap = QPushButton("Add Leap Rule")
+        self.leap_table.setAlternatingRowColors(True)
+        self.leap_table.setHorizontalHeaderLabels([translator.t("col_interval"), translator.t("col_month_append"), translator.t("col_days_add"), translator.t("col_exc_int"), translator.t("col_exc_days")])
+        self.leap_table.setToolTip(translator.t("tt_leap"))
+        leap_layout.addWidget(self.leap_table)
+        btn_add_leap = QPushButton(translator.t("btn_add_leap"))
         btn_add_leap.clicked.connect(lambda: (self.main_window.world.leap_rules.append(LeapRule()), self.populate_leap_rules()))
-        layout.addWidget(btn_add_leap)
+        leap_layout.addWidget(btn_add_leap)
         self.leap_table.itemChanged.connect(self.update_leap_rules)
+        layout.addWidget(group_leap)
 
     def populate_holidays(self):
         self.holiday_table.blockSignals(True)
@@ -422,31 +464,38 @@ class EditorWidget(QWidget):
     # --- Astronomy ---
     def setup_astronomy_tab(self):
         layout = QHBoxLayout(self.tab_astronomy)
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(15)
 
         # Suns
-        sun_layout = QVBoxLayout()
-        sun_layout.addWidget(QLabel("Suns"))
+        group_sun = QGroupBox(translator.t("lbl_suns"))
+        sun_layout = QVBoxLayout(group_sun)
         self.sun_table = QTableWidget(0, 3)
-        self.sun_table.setHorizontalHeaderLabels(["Name", "Dawn Ticks", "Dusk Ticks"])
+        self.sun_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        self.sun_table.setAlternatingRowColors(True)
+        self.sun_table.setHorizontalHeaderLabels([translator.t("col_name"), translator.t("col_dawn"), translator.t("col_dusk")])
+        self.sun_table.setToolTip(translator.t("tt_suns"))
         sun_layout.addWidget(self.sun_table)
-        btn_add_sun = QPushButton("Add Sun")
+        btn_add_sun = QPushButton(translator.t("btn_add_sun"))
         btn_add_sun.clicked.connect(lambda: (self.main_window.world.suns.append(Sun(name="New Sun")), self.populate_suns()))
         sun_layout.addWidget(btn_add_sun)
         self.sun_table.itemChanged.connect(self.update_suns)
+        layout.addWidget(group_sun)
 
         # Moons
-        moon_layout = QVBoxLayout()
-        moon_layout.addWidget(QLabel("Moons"))
+        group_moon = QGroupBox(translator.t("lbl_moons"))
+        moon_layout = QVBoxLayout(group_moon)
         self.moon_table = QTableWidget(0, 3)
-        self.moon_table.setHorizontalHeaderLabels(["Name", "Cycle (Days)", "Phase Offset"])
+        self.moon_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        self.moon_table.setAlternatingRowColors(True)
+        self.moon_table.setHorizontalHeaderLabels([translator.t("col_name"), translator.t("col_cycle"), translator.t("col_phase_off")])
+        self.moon_table.setToolTip(translator.t("tt_moons"))
         moon_layout.addWidget(self.moon_table)
-        btn_add_moon = QPushButton("Add Moon")
+        btn_add_moon = QPushButton(translator.t("btn_add_moon"))
         btn_add_moon.clicked.connect(lambda: (self.main_window.world.moons.append(Moon(name="New Moon")), self.populate_moons()))
         moon_layout.addWidget(btn_add_moon)
         self.moon_table.itemChanged.connect(self.update_moons)
-
-        layout.addLayout(sun_layout)
-        layout.addLayout(moon_layout)
+        layout.addWidget(group_moon)
 
     def populate_suns(self):
         self.sun_table.blockSignals(True)

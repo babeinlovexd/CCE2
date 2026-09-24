@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
+from PyQt6.QtWidgets import (QWidget, QGroupBox, QVBoxLayout, QHBoxLayout, QLabel,
                              QPushButton, QGridLayout, QScrollArea, QFrame,
                              QLineEdit, QListWidget, QListWidgetItem, QFormLayout, QTextEdit, QComboBox)
 from PyQt6.QtCore import Qt
@@ -6,6 +6,7 @@ from PyQt6.QtCore import Qt
 from cce.core.engine import TimeEngine
 from cce.core.astronomy import AstronomyModel
 from cce.core.models import Event
+from .translations import translator
 
 class ViewerWidget(QWidget):
     def __init__(self, main_window):
@@ -22,12 +23,13 @@ class ViewerWidget(QWidget):
 
         # Header / Navigation
         header_layout = QHBoxLayout()
-        self.btn_back = QPushButton("🔙 Editor")
+        self.btn_back = QPushButton(translator.t("btn_back"))
         self.btn_back.clicked.connect(self.main_window.switch_to_editor)
 
         self.btn_prev_year = QPushButton("<< Year")
         self.btn_prev_month = QPushButton("< Month")
         self.lbl_current_view = QLabel("Year 0, Month 1")
+        self.lbl_current_view.setStyleSheet("font-size: 18px; font-weight: bold;")
         self.lbl_current_view.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.btn_next_month = QPushButton("Month >")
         self.btn_next_year = QPushButton("Year >>")
@@ -51,12 +53,13 @@ class ViewerWidget(QWidget):
         # Search & Sync
         search_layout = QHBoxLayout()
         self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("Search events, characters, locations...")
+        self.search_input.setPlaceholderText(translator.t("search_ph"))
         self.search_input.textChanged.connect(self.perform_search)
 
-        self.planet_sync_lbl = QLabel("Sync:")
+        self.planet_sync_lbl = QLabel(translator.t("sync_lbl"))
         self.planet_sync_combo = QComboBox()
         self.planet_sync_combo.currentIndexChanged.connect(self.update_sync_display)
+        self.planet_sync_combo.setToolTip(translator.t("tt_sync"))
         self.lbl_sync_result = QLabel("")
 
         search_layout.addWidget(self.search_input)
@@ -68,7 +71,7 @@ class ViewerWidget(QWidget):
 
         # Search Results Dropdown/List (hidden by default)
         self.search_results_list = QListWidget()
-        self.search_results_list.setMaximumHeight(100)
+        self.search_results_list.setMaximumHeight(120)
         self.search_results_list.setVisible(False)
         self.search_results_list.itemClicked.connect(self.jump_to_search_result)
         self.layout.addWidget(self.search_results_list)
@@ -84,51 +87,68 @@ class ViewerWidget(QWidget):
         self.calendar_scroll.setWidget(self.calendar_widget)
         content_layout.addWidget(self.calendar_scroll, 2)
 
+
         # Right: Day Details & Events
         details_layout = QVBoxLayout()
-        self.lbl_day_title = QLabel("Select a Day")
-        self.lbl_day_title.setStyleSheet("font-size: 16px; font-weight: bold;")
-        self.lbl_astro_info = QLabel("")
+        details_layout.setSpacing(15)
 
+        # Day Details Group
+        group_day = QGroupBox(translator.t("select_day"))
+        day_layout = QVBoxLayout(group_day)
+        self.lbl_day_title = QLabel(translator.t("select_day"))
+        self.lbl_day_title.setStyleSheet("font-size: 16px; font-weight: bold; color: #89b4fa;")
+        self.lbl_astro_info = QLabel("")
+        self.lbl_astro_info.setWordWrap(True)
+        day_layout.addWidget(self.lbl_day_title)
+        day_layout.addWidget(self.lbl_astro_info)
+        details_layout.addWidget(group_day)
+
+        # Events List Group
+        group_list = QGroupBox(translator.t("lbl_events"))
+        list_layout = QVBoxLayout(group_list)
         self.event_list = QListWidget()
         self.event_list.itemClicked.connect(self.load_event)
+        list_layout.addWidget(self.event_list)
+        details_layout.addWidget(group_list, 1) # Give it stretch
 
-        # Event Editor
-        self.event_editor = QWidget()
+        # Event Editor Group
+        self.event_editor = QGroupBox("Event Editor")
         ev_layout = QFormLayout(self.event_editor)
+        ev_layout.setSpacing(10)
         self.ev_title = QLineEdit()
         self.ev_start = QLineEdit()
-        self.ev_start.setPlaceholderText("Start Tick")
+        self.ev_start.setPlaceholderText(translator.t("ev_start"))
+        self.ev_start.setToolTip(translator.t("tt_ev_start"))
         self.ev_end = QLineEdit()
-        self.ev_end.setPlaceholderText("End Tick")
+        self.ev_end.setPlaceholderText(translator.t("ev_end"))
         self.ev_chars = QLineEdit()
+        self.ev_chars.setToolTip(translator.t("tt_ev_chars"))
         self.ev_loc = QLineEdit()
         self.ev_notes = QTextEdit()
+        self.ev_notes.setMaximumHeight(80)
 
-        ev_layout.addRow("Title:", self.ev_title)
-        ev_layout.addRow("Start Tick:", self.ev_start)
-        ev_layout.addRow("End Tick:", self.ev_end)
-        ev_layout.addRow("Characters:", self.ev_chars)
-        ev_layout.addRow("Location:", self.ev_loc)
-        ev_layout.addRow("Notes:", self.ev_notes)
+        ev_layout.addRow(translator.t("ev_title"), self.ev_title)
+        ev_layout.addRow(translator.t("ev_start"), self.ev_start)
+        ev_layout.addRow(translator.t("ev_end"), self.ev_end)
+        ev_layout.addRow(translator.t("ev_chars"), self.ev_chars)
+        ev_layout.addRow(translator.t("ev_loc"), self.ev_loc)
+        ev_layout.addRow(translator.t("ev_notes"), self.ev_notes)
 
         btn_ev_layout = QHBoxLayout()
-        btn_ev_save = QPushButton("Save Event")
+        btn_ev_save = QPushButton(translator.t("btn_ev_save"))
         btn_ev_save.clicked.connect(self.save_event)
-        btn_ev_new = QPushButton("New Event")
+        btn_ev_save.setObjectName("primaryAction")
+        btn_ev_new = QPushButton(translator.t("btn_ev_new"))
         btn_ev_new.clicked.connect(self.new_event)
         btn_ev_layout.addWidget(btn_ev_new)
         btn_ev_layout.addWidget(btn_ev_save)
         ev_layout.addRow(btn_ev_layout)
 
-        details_layout.addWidget(self.lbl_day_title)
-        details_layout.addWidget(self.lbl_astro_info)
-        details_layout.addWidget(QLabel("Events:"))
-        details_layout.addWidget(self.event_list)
         details_layout.addWidget(self.event_editor)
 
         right_panel = QWidget()
         right_panel.setLayout(details_layout)
+        right_panel.setMinimumWidth(350)
         content_layout.addWidget(right_panel, 1)
 
         self.layout.addLayout(content_layout)
@@ -174,7 +194,7 @@ class ViewerWidget(QWidget):
 
         world = self.main_window.world
         if not world.months:
-            self.lbl_current_view.setText("No months defined.")
+            self.lbl_current_view.setText(translator.t("no_months"))
             return
 
         month = world.months[self.current_month_index]
@@ -243,9 +263,15 @@ class ViewerWidget(QWidget):
                 if events_today > 0:
                     btn.setText(f"{day}\n({events_today} 📌)")
                     if search_match:
-                        btn.setStyleSheet(f"background-color: yellow; font-weight: bold; border: 3px solid #ffaa00;")
+                        btn.setProperty("class", "calendar-day-search")
                     else:
-                        btn.setStyleSheet(f"background-color: {month.color}; font-weight: bold; border: 2px solid red;")
+                        btn.setProperty("class", "calendar-day-event")
+                else:
+                    btn.setProperty("class", "calendar-day")
+
+                # Force style re-evaluation
+                btn.style().unpolish(btn)
+                btn.style().polish(btn)
 
                 btn.clicked.connect(lambda checked, t=exact_tick: self.select_day(t))
 

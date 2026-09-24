@@ -1,8 +1,11 @@
 import sys
-from PyQt6.QtWidgets import QApplication, QMainWindow, QStackedWidget, QWidget, QVBoxLayout, QPushButton, QHBoxLayout
+from PyQt6.QtWidgets import QApplication, QMainWindow, QStackedWidget, QWidget, QVBoxLayout, QPushButton, QHBoxLayout, QMenuBar
 from PyQt6.QtCore import Qt
 
 from cce.core.models import World
+from .translations import translator
+from .styles import MODERN_DARK_STYLE
+
 from .editor import EditorWidget
 from .viewer import ViewerWidget
 
@@ -12,9 +15,13 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Custom Calendar Engine")
         self.resize(1200, 800)
 
+
         self.world = World()
 
+        self.create_menu_bar()
+
         self.central_widget = QWidget()
+
         self.setCentralWidget(self.central_widget)
         self.layout = QVBoxLayout(self.central_widget)
 
@@ -28,7 +35,45 @@ class MainWindow(QMainWindow):
 
         self.layout.addWidget(self.stack)
 
+
+    def create_menu_bar(self):
+        self.menu_bar = self.menuBar()
+        self.lang_menu = self.menu_bar.addMenu(translator.t("menu_language"))
+
+        action_en = self.lang_menu.addAction("English")
+        action_de = self.lang_menu.addAction("Deutsch")
+
+        action_en.triggered.connect(lambda: self.switch_language("en"))
+        action_de.triggered.connect(lambda: self.switch_language("de"))
+
+    def switch_language(self, lang_code):
+        translator.set_language(lang_code)
+        self.lang_menu.setTitle(translator.t("menu_language"))
+
+        # We need to completely rebuild the widgets to apply translations cleanly
+        # given the current architecture
+        current_idx = self.stack.currentIndex()
+
+        # Remove old widgets
+        self.stack.removeWidget(self.editor_widget)
+        self.stack.removeWidget(self.viewer_widget)
+
+        # Recreate them
+        self.editor_widget = EditorWidget(self)
+        self.viewer_widget = ViewerWidget(self)
+
+        self.stack.addWidget(self.editor_widget)
+        self.stack.addWidget(self.viewer_widget)
+
+        # Restore state
+        self.stack.setCurrentIndex(current_idx)
+        if current_idx == 0:
+            self.editor_widget.refresh_view()
+        else:
+            self.viewer_widget.refresh_view()
+
     def switch_to_viewer(self):
+
         self.viewer_widget.refresh_view()
         self.stack.setCurrentWidget(self.viewer_widget)
 
@@ -38,6 +83,7 @@ class MainWindow(QMainWindow):
 
 def run_app():
     app = QApplication(sys.argv)
+    app.setStyleSheet(MODERN_DARK_STYLE)
     window = MainWindow()
     window.show()
     sys.exit(app.exec())
