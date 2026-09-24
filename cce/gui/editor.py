@@ -135,7 +135,6 @@ class EditorWidget(QWidget):
             QMessageBox.critical(self, "Error", f"Failed to export:\n{e}")
 
     def flush_state_to_model(self):
-        self.flush_state_to_model()
         self.main_window.world.earth_sync_enabled = self.chk_earth_sync.isChecked()
         dt_str = self.earth_epoch_input.text().strip()
         if len(dt_str) == 10: dt_str += "T00:00:00"

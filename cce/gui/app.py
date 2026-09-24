@@ -1,6 +1,8 @@
+import os
 import sys
 from PyQt6.QtWidgets import QApplication, QMainWindow, QStackedWidget, QWidget, QVBoxLayout, QPushButton, QHBoxLayout, QMenuBar
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QIcon
 
 from cce.core.models import World
 from .translations import translator
@@ -9,12 +11,25 @@ from .styles import MODERN_DARK_STYLE
 from .editor import EditorWidget
 from .viewer import ViewerWidget
 
+def get_resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Custom Calendar Engine")
+        self.setWindowTitle("Chronix")
         self.resize(1200, 800)
 
+        icon_path = get_resource_path(os.path.join("assets", "icon.png"))
+        if os.path.exists(icon_path):
+            self.setWindowIcon(QIcon(icon_path))
 
         self.world = World()
         self.is_unsaved = False
@@ -50,11 +65,11 @@ class MainWindow(QMainWindow):
 
     def mark_unsaved(self):
         self.is_unsaved = True
-        self.setWindowTitle("Custom Calendar Engine *")
+        self.setWindowTitle("Chronix *")
 
     def mark_saved(self):
         self.is_unsaved = False
-        self.setWindowTitle("Custom Calendar Engine")
+        self.setWindowTitle("Chronix")
 
     def check_unsaved_changes(self) -> bool:
         if not self.is_unsaved:
@@ -111,6 +126,9 @@ class MainWindow(QMainWindow):
 
 def run_app():
     app = QApplication(sys.argv)
+    icon_path = get_resource_path(os.path.join("assets", "icon.png"))
+    if os.path.exists(icon_path):
+        app.setWindowIcon(QIcon(icon_path))
     app.setStyleSheet(MODERN_DARK_STYLE)
     window = MainWindow()
     window.show()

@@ -1,6 +1,6 @@
-# Custom Calendar Engine (CCE)
+# Chronix
 
-A complete, standalone Python desktop GUI application designed for worldbuilders, fantasy authors, and sci-fi writers. The **Custom Calendar Engine** allows you to create completely custom, hierarchical calendar and time systems from scratch, and track story events across multiple synchronized planets.
+A complete, standalone Python desktop GUI application designed for worldbuilders, fantasy authors, and sci-fi writers. **Chronix** allows you to create completely custom, hierarchical calendar and time systems from scratch, and track story events across multiple synchronized planets.
 
 ---
 
@@ -118,6 +118,6 @@ If you want to distribute the app with a proper installation wizard (Next > Next
 
 1. Download and install [Inno Setup](https://jrsoftware.org/isinfo.php).
 2. Open Inno Setup and select **Create a new script file using the Script Wizard**.
-3. Set your Application Name to `Custom Calendar Engine`.
-4. For the **Application main executable file**, browse and select the `CustomCalendarEngine.exe` from your `dist/` folder.
+3. Set your Application Name to `Chronix`.
+4. For the **Application main executable file**, browse and select the `Chronix.exe` from your `dist/` folder.
 5. Finish the wizard and compile. It will output a professional `mysetup.exe` file that users can run to install your software to `C:\Program Files\`.
