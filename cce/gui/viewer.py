@@ -146,7 +146,14 @@ class ViewerWidget(QWidget):
         btn_ev_save.setObjectName("primaryAction")
         btn_ev_new = QPushButton(translator.t("btn_ev_new"))
         btn_ev_new.clicked.connect(self.new_event)
+
+        self.btn_ev_delete = QPushButton(translator.t("btn_ev_delete"))
+        self.btn_ev_delete.clicked.connect(self.delete_event)
+        self.btn_ev_delete.setStyleSheet("background-color: #f38ba8; color: #11111b;")
+        self.btn_ev_delete.setVisible(False)
+
         btn_ev_layout.addWidget(btn_ev_new)
+        btn_ev_layout.addWidget(self.btn_ev_delete)
         btn_ev_layout.addWidget(btn_ev_save)
         ev_layout.addRow(btn_ev_layout)
 
@@ -350,6 +357,7 @@ class ViewerWidget(QWidget):
                 self.ev_chars.setText(", ".join(ev.characters))
                 self.ev_loc.setText(ev.location)
                 self.ev_notes.setText(ev.notes)
+                self.btn_ev_delete.setVisible(True)
                 break
 
     def new_event(self):
@@ -360,6 +368,7 @@ class ViewerWidget(QWidget):
         self.ev_chars.clear()
         self.ev_loc.clear()
         self.ev_notes.clear()
+        self.btn_ev_delete.setVisible(False)
 
     def save_event(self):
         if not self.current_event:
@@ -377,9 +386,20 @@ class ViewerWidget(QWidget):
         self.current_event.characters = [c.strip() for c in self.ev_chars.text().split(",") if c.strip()]
         self.current_event.location = self.ev_loc.text()
         self.current_event.notes = self.ev_notes.toPlainText()
+        self.main_window.mark_unsaved()
 
         p_planet = self.engine.get_primary_planet()
         self.load_events_for_day(self.selected_tick, p_planet.day_length_ticks if p_planet else 86400)
+
+    def delete_event(self):
+        if self.current_event in self.main_window.world.events:
+            self.main_window.world.events.remove(self.current_event)
+            self.main_window.mark_unsaved()
+            self.new_event()
+
+            p_planet = self.engine.get_primary_planet()
+            self.load_events_for_day(self.selected_tick, p_planet.day_length_ticks if p_planet else 86400)
+            self.render_calendar()
 
     def perform_search(self):
         query = self.search_input.text().lower().strip()

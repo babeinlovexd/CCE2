@@ -99,3 +99,12 @@ class World:
     suns: List[Sun] = field(default_factory=list)
     moons: List[Moon] = field(default_factory=list)
     events: List[Event] = field(default_factory=list)
+
+
+    def __post_init__(self):
+        if not self.planets:
+            self.planets.append(Planet(name="Primary Planet", is_primary=True))
+        if not self.months:
+            self.months.append(Month(name="First Month", days=30, color="#181825"))
+        if not self.time_units:
+            self.time_units.append(TimeUnit(name="Hour", abbreviation="h", ticks=3600))

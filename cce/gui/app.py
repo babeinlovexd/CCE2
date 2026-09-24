@@ -17,6 +17,7 @@ class MainWindow(QMainWindow):
 
 
         self.world = World()
+        self.is_unsaved = False
 
         self.create_menu_bar()
 
@@ -45,6 +46,33 @@ class MainWindow(QMainWindow):
 
         action_en.triggered.connect(lambda: self.switch_language("en"))
         action_de.triggered.connect(lambda: self.switch_language("de"))
+
+
+    def mark_unsaved(self):
+        self.is_unsaved = True
+        self.setWindowTitle("Custom Calendar Engine *")
+
+    def mark_saved(self):
+        self.is_unsaved = False
+        self.setWindowTitle("Custom Calendar Engine")
+
+    def check_unsaved_changes(self) -> bool:
+        if not self.is_unsaved:
+            return True
+
+        from PyQt6.QtWidgets import QMessageBox
+        reply = QMessageBox.question(self, translator.t("warn_unsaved_title"),
+                                     translator.t("warn_unsaved_msg"),
+                                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                                     QMessageBox.StandardButton.No)
+
+        return reply == QMessageBox.StandardButton.Yes
+
+    def closeEvent(self, event):
+        if self.check_unsaved_changes():
+            event.accept()
+        else:
+            event.ignore()
 
     def switch_language(self, lang_code):
         translator.set_language(lang_code)

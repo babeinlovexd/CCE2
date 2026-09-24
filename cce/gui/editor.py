@@ -6,6 +6,7 @@ from PyQt6.QtCore import Qt
 
 from cce.core.models import TimeUnit, Planet, Era, Month, Weekday, Holiday, LeapRule, Sun, Moon
 from cce.core.storage import save_world, load_world
+from cce.core.engine import TimeEngine
 from .translations import translator
 
 class EditorWidget(QWidget):
@@ -18,15 +19,18 @@ class EditorWidget(QWidget):
         top_bar = QHBoxLayout()
         self.btn_save = QPushButton(translator.t("btn_save"))
         self.btn_open = QPushButton(translator.t("btn_open"))
+        self.btn_export = QPushButton(translator.t("btn_export"))
         self.btn_generate = QPushButton(translator.t("btn_generate"))
         self.btn_generate.setObjectName("primaryAction")
 
         self.btn_save.clicked.connect(self.save_project)
         self.btn_open.clicked.connect(self.open_project)
+        self.btn_export.clicked.connect(self.export_timeline)
         self.btn_generate.clicked.connect(self.main_window.switch_to_viewer)
 
         top_bar.addWidget(self.btn_open)
         top_bar.addWidget(self.btn_save)
+        top_bar.addWidget(self.btn_export)
         top_bar.addStretch()
         self.btn_generate.setMinimumHeight(35)
         top_bar.addWidget(self.btn_generate)
@@ -79,37 +83,93 @@ class EditorWidget(QWidget):
         self.populate_suns()
         self.populate_moons()
 
-    def save_project(self):
-        # Update basic info before saving
-        self.main_window.world.name = self.world_name_input.text()
-        self.main_window.world.base_tick_name = self.base_tick_input.text()
 
+    def export_timeline(self):
+        # Force flush editor state before export
+        self.flush_state_to_model()
+
+        if not self.main_window.world.events:
+            QMessageBox.information(self, "Export", "No events to export.")
+            return
+
+        fname, _ = QFileDialog.getSaveFileName(self, translator.t("btn_export"), "timeline.md", "Markdown Files (*.md);;Text Files (*.txt);;All Files (*)")
+        if not fname:
+            return
+
+        engine = TimeEngine(self.main_window.world)
+        p_planet = engine.get_primary_planet()
+
+        # Sort events chronologically
+        sorted_events = sorted(self.main_window.world.events, key=lambda e: e.start_tick)
+
+        try:
+            with open(fname, 'w', encoding='utf-8') as f:
+                f.write(f"# Timeline: {self.main_window.world.name}\n\n")
+
+                for ev in sorted_events:
+                    date_str = f"Tick {ev.start_tick}"
+                    if p_planet:
+                        d_info = engine.tick_to_date(p_planet, ev.start_tick)
+                        m_name = d_info['month'].name if d_info.get('month') else "Intercalary"
+                        e_name = f"{d_info['era'].name} " if d_info.get('era') else ""
+                        date_str = f"{e_name}Year {d_info['year']}, {m_name} {d_info['day_of_month']}"
+
+                    earth_str = ""
+                    if self.main_window.world.earth_sync_enabled:
+                        earth_dt = engine.tick_to_earth_date(ev.start_tick)
+                        if earth_dt:
+                            earth_str = f" | 🌍 *{earth_dt.strftime('%Y-%m-%d')}*"
+
+                    chars = f"**Characters:** {', '.join(ev.characters)}\n" if ev.characters else ""
+                    loc = f"**Location:** {ev.location}\n" if ev.location else ""
+
+                    f.write(f"## {ev.title}\n")
+                    f.write(f"**Date:** {date_str}{earth_str}\n\n")
+                    if chars: f.write(chars)
+                    if loc: f.write(loc)
+                    if ev.notes: f.write(f"\n{ev.notes}\n")
+                    f.write("\n---\n\n")
+
+            QMessageBox.information(self, "Success", translator.t("export_success"))
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to export:\n{e}")
+
+    def flush_state_to_model(self):
+        self.flush_state_to_model()
         self.main_window.world.earth_sync_enabled = self.chk_earth_sync.isChecked()
-        # Basic validation for ISO format (T appended if just date)
         dt_str = self.earth_epoch_input.text().strip()
-        if len(dt_str) == 10:  # YYYY-MM-DD
-            dt_str += "T00:00:00"
+        if len(dt_str) == 10: dt_str += "T00:00:00"
         self.main_window.world.earth_epoch_iso = dt_str
-
         try:
             self.main_window.world.real_seconds_per_tick = float(self.real_seconds_input.text())
         except ValueError:
             pass
+
+    def save_project(self):
+        # Update basic info before saving
+        self.flush_state_to_model()
+
+
 
 
         fname, _ = QFileDialog.getSaveFileName(self, "Save World", "", "Worldcal Files (*.worldcal);;All Files (*)")
         if fname:
             try:
                 save_world(self.main_window.world, fname)
+                self.main_window.mark_saved()
                 QMessageBox.information(self, "Success", "Project saved successfully!")
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Failed to save:\n{e}")
 
     def open_project(self):
+        if not self.main_window.check_unsaved_changes():
+            return
+
         fname, _ = QFileDialog.getOpenFileName(self, "Open World", "", "Worldcal Files (*.worldcal);;All Files (*)")
         if fname:
             try:
                 self.main_window.world = load_world(fname)
+                self.main_window.mark_saved()
                 self.refresh_view()
                 QMessageBox.information(self, "Success", "Project loaded successfully!")
             except Exception as e:
@@ -153,6 +213,11 @@ class EditorWidget(QWidget):
 
         # Connect signals
         self.chk_earth_sync.stateChanged.connect(self.update_earth_sync_state)
+        self.world_name_input.textChanged.connect(lambda: self.main_window.mark_unsaved())
+        self.base_tick_input.textChanged.connect(lambda: self.main_window.mark_unsaved())
+        self.earth_epoch_input.textChanged.connect(lambda: self.main_window.mark_unsaved())
+        self.real_seconds_input.textChanged.connect(lambda: self.main_window.mark_unsaved())
+
 
         # Group 2: Time Units
         group_units = QGroupBox(translator.t("time_units_lbl"))
@@ -188,6 +253,8 @@ class EditorWidget(QWidget):
             self.units_table.setItem(r, 0, QTableWidgetItem(u.name))
             self.units_table.setItem(r, 1, QTableWidgetItem(u.abbreviation))
             self.units_table.setItem(r, 2, QTableWidgetItem(str(u.ticks)))
+
+        self.main_window.mark_unsaved()
         self.units_table.blockSignals(False)
 
     def add_time_unit(self):
@@ -256,6 +323,7 @@ class EditorWidget(QWidget):
             chk.setFlags(Qt.ItemFlag.ItemIsUserCheckable | Qt.ItemFlag.ItemIsEnabled)
             chk.setCheckState(Qt.CheckState.Checked if p.is_primary else Qt.CheckState.Unchecked)
             self.planets_table.setItem(r, 3, chk)
+        self.main_window.mark_unsaved()
         self.planets_table.blockSignals(False)
 
     def add_planet(self):
@@ -349,6 +417,7 @@ class EditorWidget(QWidget):
             chk.setFlags(Qt.ItemFlag.ItemIsUserCheckable | Qt.ItemFlag.ItemIsEnabled)
             chk.setCheckState(Qt.CheckState.Checked if e.includes_year_zero else Qt.CheckState.Unchecked)
             self.era_table.setItem(r, 3, chk)
+        self.main_window.mark_unsaved()
         self.era_table.blockSignals(False)
 
     def update_eras(self, item):
@@ -371,6 +440,7 @@ class EditorWidget(QWidget):
             self.month_table.setItem(r, 0, QTableWidgetItem(m.name))
             self.month_table.setItem(r, 1, QTableWidgetItem(str(m.days)))
             self.month_table.setItem(r, 2, QTableWidgetItem(m.color))
+        self.main_window.mark_unsaved()
         self.month_table.blockSignals(False)
 
     def update_months(self):
@@ -389,6 +459,7 @@ class EditorWidget(QWidget):
         self.weekday_table.setRowCount(len(self.main_window.world.weekdays))
         for r, w in enumerate(self.main_window.world.weekdays):
             self.weekday_table.setItem(r, 0, QTableWidgetItem(w.name))
+        self.main_window.mark_unsaved()
         self.weekday_table.blockSignals(False)
 
     def update_weekdays(self):
@@ -454,6 +525,7 @@ class EditorWidget(QWidget):
             chk.setFlags(Qt.ItemFlag.ItemIsUserCheckable | Qt.ItemFlag.ItemIsEnabled)
             chk.setCheckState(Qt.CheckState.Checked if h.counts_as_weekday else Qt.CheckState.Unchecked)
             self.holiday_table.setItem(r, 3, chk)
+        self.main_window.mark_unsaved()
         self.holiday_table.blockSignals(False)
 
     def update_holidays(self, item):
@@ -493,6 +565,7 @@ class EditorWidget(QWidget):
             self.leap_table.setItem(r, 2, QTableWidgetItem(str(l.days_to_add)))
             self.leap_table.setItem(r, 3, QTableWidgetItem(str(l.exception_interval) if l.exception_interval else ""))
             self.leap_table.setItem(r, 4, QTableWidgetItem(str(l.exception_days)))
+        self.main_window.mark_unsaved()
         self.leap_table.blockSignals(False)
 
     def update_leap_rules(self):
@@ -552,6 +625,7 @@ class EditorWidget(QWidget):
             self.sun_table.setItem(r, 0, QTableWidgetItem(s.name))
             self.sun_table.setItem(r, 1, QTableWidgetItem(str(s.twilight_dawn_ticks)))
             self.sun_table.setItem(r, 2, QTableWidgetItem(str(s.twilight_dusk_ticks)))
+        self.main_window.mark_unsaved()
         self.sun_table.blockSignals(False)
 
     def update_suns(self):
@@ -572,6 +646,7 @@ class EditorWidget(QWidget):
             self.moon_table.setItem(r, 0, QTableWidgetItem(m.name))
             self.moon_table.setItem(r, 1, QTableWidgetItem(str(m.cycle_days)))
             self.moon_table.setItem(r, 2, QTableWidgetItem(str(m.phase_offset)))
+        self.main_window.mark_unsaved()
         self.moon_table.blockSignals(False)
 
     def update_moons(self):

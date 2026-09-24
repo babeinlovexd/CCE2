@@ -38,6 +38,13 @@ LANGUAGES = {
         "tt_earth_epoch": "The real world date that corresponds to the very beginning of your calendar (Tick 0).",
         "tt_real_seconds": "How many real-world seconds make up one of your base ticks. (e.g. 1.0 = normal time, 2.0 = half speed).",
         "lbl_earth_date": "Earth Date:",
+        # New Features
+        "btn_ev_delete": "Delete Event",
+        "btn_export": "Export Timeline",
+        "warn_unsaved_title": "Unsaved Changes",
+        "warn_unsaved_msg": "You have unsaved changes. Are you sure you want to proceed without saving?",
+        "export_success": "Timeline exported successfully!",
+
 
 
         # Planets Tab
@@ -150,6 +157,13 @@ LANGUAGES = {
         "tt_earth_epoch": "Das reale Datum, das dem absoluten Beginn deines Kalenders (Tick 0) entspricht.",
         "tt_real_seconds": "Wie viele echte Sekunden einem deiner Basis-Ticks entsprechen. (z.B. 1.0 = normale Zeit, 0.5 = doppelt so schnell).",
         "lbl_earth_date": "Erd-Datum:",
+        # New Features
+        "btn_ev_delete": "Event löschen",
+        "btn_export": "Timeline exportieren",
+        "warn_unsaved_title": "Ungespeicherte Änderungen",
+        "warn_unsaved_msg": "Du hast ungespeicherte Änderungen. Möchtest du wirklich fortfahren, ohne zu speichern?",
+        "export_success": "Timeline erfolgreich exportiert!",
+
 
 
         # Planets Tab
