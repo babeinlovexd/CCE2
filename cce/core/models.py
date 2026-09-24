@@ -65,8 +65,8 @@ class LeapRule:
     interval_years: int = 4
     month_id_to_append: str = ""
     days_to_add: int = 1
-    exception_interval: Optional[int] = 100
-    exception_days: int = -1
+    exclude_interval: int = 0
+    force_include_interval: int = 0
 
 @dataclass
 class Event:
@@ -77,6 +77,7 @@ class Event:
     characters: List[str] = field(default_factory=list)
     location: str = ""
     category: str = ""
+    color: str = "#89b4fa"
     notes: str = ""
 
 @dataclass

@@ -562,8 +562,8 @@ class EditorWidget(QWidget):
             self.leap_table.setItem(r, 0, QTableWidgetItem(str(l.interval_years)))
             self.leap_table.setItem(r, 1, QTableWidgetItem(l.month_id_to_append))
             self.leap_table.setItem(r, 2, QTableWidgetItem(str(l.days_to_add)))
-            self.leap_table.setItem(r, 3, QTableWidgetItem(str(l.exception_interval) if l.exception_interval else ""))
-            self.leap_table.setItem(r, 4, QTableWidgetItem(str(l.exception_days)))
+            self.leap_table.setItem(r, 3, QTableWidgetItem(str(l.exclude_interval)))
+            self.leap_table.setItem(r, 4, QTableWidgetItem(str(l.force_include_interval)))
         self.main_window.mark_unsaved()
         self.leap_table.blockSignals(False)
 
@@ -571,12 +571,11 @@ class EditorWidget(QWidget):
         for r in range(self.leap_table.rowCount()):
             l = self.main_window.world.leap_rules[r]
             try:
-                l.interval_years = int(self.leap_table.item(r, 0).text())
+                l.interval_years = int(self.leap_table.item(r, 0).text() or "0")
                 l.month_id_to_append = self.leap_table.item(r, 1).text()
-                l.days_to_add = int(self.leap_table.item(r, 2).text())
-                ex_int = self.leap_table.item(r, 3).text()
-                l.exception_interval = int(ex_int) if ex_int else None
-                l.exception_days = int(self.leap_table.item(r, 4).text())
+                l.days_to_add = int(self.leap_table.item(r, 2).text() or "0")
+                l.exclude_interval = int(self.leap_table.item(r, 3).text() or "0")
+                l.force_include_interval = int(self.leap_table.item(r, 4).text() or "0")
             except ValueError:
                 QMessageBox.warning(self, 'Invalid Input', 'Please enter a valid number.')
                 self.refresh_view()

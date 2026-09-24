@@ -26,14 +26,16 @@ class TimeEngine:
         leap_days = 0
         for rule in self.world.leap_rules:
             if rule.interval_years > 0 and year % rule.interval_years == 0:
-                is_exception = False
-                if rule.exception_interval and rule.exception_interval > 0 and year % rule.exception_interval == 0:
-                    is_exception = True
+                # Check for exclusion
+                is_excluded = False
+                if rule.exclude_interval and rule.exclude_interval > 0 and year % rule.exclude_interval == 0:
+                    is_excluded = True
+                    # Check for force inclusion (e.g. every 400 years)
+                    if rule.force_include_interval and rule.force_include_interval > 0 and year % rule.force_include_interval == 0:
+                        is_excluded = False
 
-                if not is_exception:
+                if not is_excluded:
                     leap_days += rule.days_to_add
-                else:
-                    leap_days += rule.exception_days
 
         return base_days + leap_days
 
@@ -77,14 +79,14 @@ class TimeEngine:
         leap_additions = {}
         for rule in self.world.leap_rules:
             if rule.interval_years > 0 and year % rule.interval_years == 0:
-                is_exception = False
-                if rule.exception_interval and rule.exception_interval > 0 and year % rule.exception_interval == 0:
-                    is_exception = True
+                is_excluded = False
+                if rule.exclude_interval and rule.exclude_interval > 0 and year % rule.exclude_interval == 0:
+                    is_excluded = True
+                    if rule.force_include_interval and rule.force_include_interval > 0 and year % rule.force_include_interval == 0:
+                        is_excluded = False
 
-                if not is_exception:
+                if not is_excluded:
                     leap_additions[rule.month_id_to_append] = leap_additions.get(rule.month_id_to_append, 0) + rule.days_to_add
-                else:
-                    leap_additions[rule.month_id_to_append] = leap_additions.get(rule.month_id_to_append, 0) + rule.exception_days
 
         found = False
         for month in self.world.months:
@@ -195,14 +197,14 @@ class TimeEngine:
         leap_additions = {}
         for rule in self.world.leap_rules:
             if rule.interval_years > 0 and year % rule.interval_years == 0:
-                is_exception = False
-                if rule.exception_interval and rule.exception_interval > 0 and year % rule.exception_interval == 0:
-                    is_exception = True
+                is_excluded = False
+                if rule.exclude_interval and rule.exclude_interval > 0 and year % rule.exclude_interval == 0:
+                    is_excluded = True
+                    if rule.force_include_interval and rule.force_include_interval > 0 and year % rule.force_include_interval == 0:
+                        is_excluded = False
 
-                if not is_exception:
+                if not is_excluded:
                     leap_additions[rule.month_id_to_append] = leap_additions.get(rule.month_id_to_append, 0) + rule.days_to_add
-                else:
-                    leap_additions[rule.month_id_to_append] = leap_additions.get(rule.month_id_to_append, 0) + rule.exception_days
 
         days_in_current_year = 0
 

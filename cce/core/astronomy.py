@@ -46,3 +46,28 @@ class AstronomyModel:
             "illumination": illumination,
             "age": current_cycle_day
         }
+
+    def get_moon_phases_for_tick(self, tick: int) -> dict:
+        """
+        Calculates the phase for all moons at a specific tick.
+        """
+        # For simplicity, we calculate based on primary planet's days
+        p_planet = None
+        for p in self.world.planets:
+            if p.is_primary:
+                p_planet = p
+                break
+        if not p_planet and self.world.planets:
+            p_planet = self.world.planets[0]
+
+        total_days = tick // p_planet.day_length_ticks if p_planet and p_planet.day_length_ticks > 0 else 0
+
+        result = {}
+        for m in self.world.moons:
+            p_data = self.get_moon_phase(m, total_days)
+            result[m.id] = {
+                "moon": m,
+                "phase_name": p_data["phase_name"],
+                "phase_percent": p_data["illumination"]
+            }
+        return result

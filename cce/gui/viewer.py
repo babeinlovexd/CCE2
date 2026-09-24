@@ -7,6 +7,45 @@ from cce.core.engine import TimeEngine
 from cce.core.astronomy import AstronomyModel
 from cce.core.models import Event
 from .translations import translator
+from PyQt6.QtCore import QMimeData
+from PyQt6.QtGui import QDrag
+
+class DayButton(QPushButton):
+    def __init__(self, text, day_tick, parent_viewer):
+        super().__init__(text)
+        self.day_tick = day_tick
+        self.parent_viewer = parent_viewer
+        self.setAcceptDrops(True)
+
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasFormat('text/plain'):
+            event.accept()
+        else:
+            event.ignore()
+
+    def dropEvent(self, event):
+        event_id = event.mimeData().text()
+        self.parent_viewer.move_event_to_day(event_id, self.day_tick)
+        event.accept()
+
+class EventListWidget(QListWidget):
+    def __init__(self, parent_viewer):
+        super().__init__()
+        self.parent_viewer = parent_viewer
+        self.setDragEnabled(True)
+
+    def startDrag(self, supportedActions):
+        item = self.currentItem()
+        if not item: return
+
+        event_id = item.data(Qt.ItemDataRole.UserRole)
+        if not event_id: return
+
+        drag = QDrag(self)
+        mimeData = QMimeData()
+        mimeData.setText(str(event_id))
+        drag.setMimeData(mimeData)
+        drag.exec(supportedActions)
 
 class ViewerWidget(QWidget):
     def __init__(self, main_window):
@@ -67,6 +106,10 @@ class ViewerWidget(QWidget):
         search_layout.addWidget(self.planet_sync_combo)
         search_layout.addWidget(self.lbl_sync_result)
 
+        btn_export_img = QPushButton("Export Calendar Image")
+        btn_export_img.clicked.connect(self.export_calendar_image)
+        search_layout.addWidget(btn_export_img)
+
         self.layout.addLayout(search_layout)
 
         # Search Results Dropdown/List (hidden by default)
@@ -112,7 +155,7 @@ class ViewerWidget(QWidget):
         # Events List Group
         group_list = QGroupBox(translator.t("lbl_events"))
         list_layout = QVBoxLayout(group_list)
-        self.event_list = QListWidget()
+        self.event_list = EventListWidget(self)
         self.event_list.itemClicked.connect(self.load_event)
         list_layout.addWidget(self.event_list)
         details_layout.addWidget(group_list, 1) # Give it stretch
@@ -130,12 +173,24 @@ class ViewerWidget(QWidget):
         self.ev_chars = QLineEdit()
         self.ev_chars.setToolTip(translator.t("tt_ev_chars"))
         self.ev_loc = QLineEdit()
+
+        # Categories & Color
+        self.ev_cat_layout = QHBoxLayout()
+        self.ev_category = QComboBox()
+        self.ev_category.addItems(["General", "Battle", "Birth", "Death", "Travel", "Politics", "Magic"])
+        self.ev_category.setEditable(True)
+        self.ev_color = QComboBox()
+        self.ev_color.addItems(["#89b4fa", "#f38ba8", "#a6e3a1", "#f9e2af", "#cba6f7", "#fab387"])
+        self.ev_cat_layout.addWidget(self.ev_category)
+        self.ev_cat_layout.addWidget(self.ev_color)
+
         self.ev_notes = QTextEdit()
         self.ev_notes.setMaximumHeight(80)
 
         ev_layout.addRow(translator.t("ev_title"), self.ev_title)
         ev_layout.addRow(translator.t("ev_start"), self.ev_start)
         ev_layout.addRow(translator.t("ev_end"), self.ev_end)
+        ev_layout.addRow("Category/Color", self.ev_cat_layout)
         ev_layout.addRow(translator.t("ev_chars"), self.ev_chars)
         ev_layout.addRow(translator.t("ev_loc"), self.ev_loc)
         ev_layout.addRow(translator.t("ev_notes"), self.ev_notes)
@@ -250,12 +305,12 @@ class ViewerWidget(QWidget):
                     break
 
         for day in range(1, days_in_month + 1):
-            btn = QPushButton(str(day))
+            exact_tick = self.engine.date_to_tick(p_planet, self.current_year, self.current_month_index, day) if p_planet else 0
+            btn = DayButton(str(day), exact_tick, self)
             btn.setFixedSize(60, 60)
             btn.setStyleSheet(f"background-color: {month.color};")
 
             if p_planet:
-                exact_tick = self.engine.date_to_tick(p_planet, self.current_year, self.current_month_index, day)
 
                 # Visual badge for events
                 events_today = 0
@@ -273,12 +328,23 @@ class ViewerWidget(QWidget):
                                 if query in char.lower():
                                     search_match = True
 
+                moons_info = self.astro.get_moon_phases_for_tick(exact_tick)
+                moon_tooltip = ""
+                for m_id, p_info in moons_info.items():
+                    moon_tooltip += f"{p_info['moon'].name}: {p_info['phase_name']} ({int(p_info['phase_percent']*100)}%)\n"
+                if moon_tooltip:
+                    btn.setToolTip(moon_tooltip.strip())
+                    btn.setText(f"{day}\n🌘")
+
                 if events_today > 0:
-                    btn.setText(f"{day}\n({events_today} 📌)")
-                    if search_match:
-                        btn.setProperty("class", "calendar-day-search")
-                    else:
-                        btn.setProperty("class", "calendar-day-event")
+                    base_text = str(day)
+                    if moon_tooltip: base_text += "\n🌘"
+                    btn.setText(f"{base_text}\n({events_today} 📌)")
+
+                if search_match:
+                    btn.setProperty("class", "calendar-day-search")
+                elif events_today > 0:
+                    btn.setProperty("class", "calendar-day-event")
                 else:
                     btn.setProperty("class", "calendar-day")
 
@@ -344,7 +410,30 @@ class ViewerWidget(QWidget):
 
         for ev in self.main_window.world.events:
             if ev.start_tick >= start_bound and ev.start_tick < end_bound:
-                self.event_list.addItem(ev.title)
+                list_item = QListWidgetItem(ev.title)
+                list_item.setData(Qt.ItemDataRole.UserRole, ev.id)
+                # Parse color if present
+                from PyQt6.QtGui import QColor, QBrush
+                if getattr(ev, "color", None):
+                    # Set a subtle left border/background color indicator
+                    # PyQt6 item background:
+                    list_item.setForeground(QBrush(QColor(ev.color)))
+                self.event_list.addItem(list_item)
+
+    def move_event_to_day(self, event_id: str, new_day_tick: int):
+        for ev in self.main_window.world.events:
+            if ev.id == event_id:
+                # Calculate duration
+                duration = ev.end_tick - ev.start_tick
+                # We need to preserve time of day. Find old time of day.
+                p_planet = self.engine.get_primary_planet()
+                old_tod = ev.start_tick % p_planet.day_length_ticks if p_planet else 0
+
+                ev.start_tick = new_day_tick + old_tod
+                ev.end_tick = ev.start_tick + duration
+                self.main_window.mark_unsaved()
+                self.refresh_view()
+                break
 
     def load_event(self, item):
         title = item.text()
@@ -357,6 +446,21 @@ class ViewerWidget(QWidget):
                 self.ev_chars.setText(", ".join(ev.characters))
                 self.ev_loc.setText(ev.location)
                 self.ev_notes.setText(ev.notes)
+
+                cat = getattr(ev, "category", "")
+                idx = self.ev_category.findText(cat)
+                if idx >= 0:
+                    self.ev_category.setCurrentIndex(idx)
+                else:
+                    self.ev_category.setCurrentText(cat)
+
+                col = getattr(ev, "color", "#89b4fa")
+                idx = self.ev_color.findText(col)
+                if idx >= 0:
+                    self.ev_color.setCurrentIndex(idx)
+                else:
+                    self.ev_color.setCurrentText(col)
+
                 self.btn_ev_delete.setVisible(True)
                 break
 
@@ -368,6 +472,8 @@ class ViewerWidget(QWidget):
         self.ev_chars.clear()
         self.ev_loc.clear()
         self.ev_notes.clear()
+        self.ev_category.setCurrentIndex(0)
+        self.ev_color.setCurrentIndex(0)
         self.btn_ev_delete.setVisible(False)
 
     def save_event(self):
@@ -385,6 +491,8 @@ class ViewerWidget(QWidget):
             return
         self.current_event.characters = [c.strip() for c in self.ev_chars.text().split(",") if c.strip()]
         self.current_event.location = self.ev_loc.text()
+        self.current_event.category = self.ev_category.currentText()
+        self.current_event.color = self.ev_color.currentText()
         self.current_event.notes = self.ev_notes.toPlainText()
         self.main_window.mark_unsaved()
 
@@ -400,6 +508,20 @@ class ViewerWidget(QWidget):
             p_planet = self.engine.get_primary_planet()
             self.load_events_for_day(self.selected_tick, p_planet.day_length_ticks if p_planet else 86400)
             self.render_calendar()
+
+    def export_calendar_image(self):
+        from PyQt6.QtWidgets import QFileDialog, QMessageBox
+        from PyQt6.QtGui import QPixmap
+        import os
+
+        file_path, _ = QFileDialog.getSaveFileName(self, "Export Calendar as Image", "", "PNG Images (*.png)")
+        if file_path:
+            # Grab the widget containing the calendar grid
+            pixmap = self.calendar_grid.parentWidget().grab()
+            if pixmap.save(file_path, "PNG"):
+                QMessageBox.information(self, "Success", f"Calendar exported successfully to {os.path.basename(file_path)}!")
+            else:
+                QMessageBox.critical(self, "Error", "Failed to export calendar image.")
 
     def perform_search(self):
         query = self.search_input.text().lower().strip()
