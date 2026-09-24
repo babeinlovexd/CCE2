@@ -1,8 +1,8 @@
 import os
 import sys
-from PyQt6.QtWidgets import QApplication, QMainWindow, QStackedWidget, QWidget, QVBoxLayout, QPushButton, QHBoxLayout, QMenuBar
+from PyQt6.QtWidgets import QApplication, QMainWindow, QStackedWidget, QWidget, QVBoxLayout, QPushButton, QHBoxLayout, QMenuBar, QLabel
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QIcon
+from PyQt6.QtGui import QIcon, QPixmap
 
 from cce.core.models import World
 from .translations import translator
@@ -40,6 +40,18 @@ class MainWindow(QMainWindow):
 
         self.setCentralWidget(self.central_widget)
         self.layout = QVBoxLayout(self.central_widget)
+
+        # --- LOGO BANNER ---
+        self.logo_label = QLabel()
+        self.logo_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        if os.path.exists(icon_path):
+            pixmap = QPixmap(icon_path)
+            # Scale logo to a reasonable height, e.g., 80px, keeping aspect ratio
+            scaled_pixmap = pixmap.scaledToHeight(80, Qt.TransformationMode.SmoothTransformation)
+            self.logo_label.setPixmap(scaled_pixmap)
+
+        self.layout.addWidget(self.logo_label)
+        # -------------------
 
         self.stack = QStackedWidget()
 
