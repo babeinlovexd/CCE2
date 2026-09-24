@@ -20,16 +20,17 @@ A complete, standalone Python desktop GUI application for worldbuilders, fantasy
 - **Python 3.10** or higher installed.
 
 ### 2. Install Dependencies
-Install the required GUI framework (PyQt6) via pip:
+Install the required GUI framework (PyQt6) via pip. Open your terminal or command prompt and run:
 ```bash
 pip install -r requirements.txt
 ```
-*(Or manually run: `pip install PyQt6`)*
+*(Note for Windows users: If the above command fails, try running `py -m pip install -r requirements.txt` or `python -m pip install -r requirements.txt` instead)*
 
 ### 3. Run from Source
 ```bash
 python main.py
 ```
+*(Note for Windows users: If `python` is not recognized, use `py main.py` instead)*
 
 ---
 
@@ -41,6 +42,7 @@ You can easily package this application into a standalone `.exe` file for Window
 ```bash
 pip install pyinstaller
 ```
+*(Windows alternative: `py -m pip install pyinstaller`)*
 
 ### 2. Run the Build Script
 A convenience script `build.sh` is provided. Alternatively, run the command manually:
