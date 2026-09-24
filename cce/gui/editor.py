@@ -60,6 +60,15 @@ class EditorWidget(QWidget):
         w = self.main_window.world
         self.world_name_input.setText(w.name)
         self.base_tick_input.setText(w.base_tick_name)
+
+        # Earth Sync
+        self.chk_earth_sync.blockSignals(True)
+        self.chk_earth_sync.setChecked(w.earth_sync_enabled)
+        self.chk_earth_sync.blockSignals(False)
+        self.earth_epoch_input.setText(w.earth_epoch_iso)
+        self.real_seconds_input.setText(str(w.real_seconds_per_tick))
+        self.update_earth_sync_state()
+
         self.populate_time_units()
         self.populate_planets()
         self.populate_months()
@@ -74,6 +83,19 @@ class EditorWidget(QWidget):
         # Update basic info before saving
         self.main_window.world.name = self.world_name_input.text()
         self.main_window.world.base_tick_name = self.base_tick_input.text()
+
+        self.main_window.world.earth_sync_enabled = self.chk_earth_sync.isChecked()
+        # Basic validation for ISO format (T appended if just date)
+        dt_str = self.earth_epoch_input.text().strip()
+        if len(dt_str) == 10:  # YYYY-MM-DD
+            dt_str += "T00:00:00"
+        self.main_window.world.earth_epoch_iso = dt_str
+
+        try:
+            self.main_window.world.real_seconds_per_tick = float(self.real_seconds_input.text())
+        except ValueError:
+            pass
+
 
         fname, _ = QFileDialog.getSaveFileName(self, "Save World", "", "Worldcal Files (*.worldcal);;All Files (*)")
         if fname:
@@ -110,6 +132,27 @@ class EditorWidget(QWidget):
         form.addRow(translator.t("world_name"), self.world_name_input)
         form.addRow(translator.t("base_tick_name"), self.base_tick_input)
         layout.addWidget(group_basics)
+
+
+        # Group 1.5: Earth Synchronization
+        group_earth = QGroupBox(translator.t("lbl_earth_sync"))
+        earth_layout = QFormLayout(group_earth)
+        earth_layout.setSpacing(15)
+
+        self.chk_earth_sync = QCheckBox(translator.t("chk_earth_sync"))
+        self.chk_earth_sync.setToolTip(translator.t("tt_earth_sync"))
+        self.earth_epoch_input = QLineEdit()
+        self.earth_epoch_input.setToolTip(translator.t("tt_earth_epoch"))
+        self.real_seconds_input = QLineEdit()
+        self.real_seconds_input.setToolTip(translator.t("tt_real_seconds"))
+
+        earth_layout.addRow("", self.chk_earth_sync)
+        earth_layout.addRow(translator.t("lbl_earth_epoch"), self.earth_epoch_input)
+        earth_layout.addRow(translator.t("lbl_real_seconds"), self.real_seconds_input)
+        layout.addWidget(group_earth)
+
+        # Connect signals
+        self.chk_earth_sync.stateChanged.connect(self.update_earth_sync_state)
 
         # Group 2: Time Units
         group_units = QGroupBox(translator.t("time_units_lbl"))
@@ -167,6 +210,11 @@ class EditorWidget(QWidget):
             except ValueError:
                 QMessageBox.warning(self, 'Invalid Input', 'Please enter a valid number.')
                 self.refresh_view()
+
+    def update_earth_sync_state(self):
+        is_enabled = self.chk_earth_sync.isChecked()
+        self.earth_epoch_input.setEnabled(is_enabled)
+        self.real_seconds_input.setEnabled(is_enabled)
 
     # --- Planets ---
     def setup_planets_tab(self):

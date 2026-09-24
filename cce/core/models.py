@@ -84,6 +84,11 @@ class World:
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
     name: str = "New World"
     base_tick_name: str = "Tick"
+
+    # Earth Synchronization
+    earth_sync_enabled: bool = False
+    earth_epoch_iso: str = "2000-01-01T00:00:00"  # Real world date for Tick 0
+    real_seconds_per_tick: float = 1.0            # Real world seconds per 1 tick
     time_units: List[TimeUnit] = field(default_factory=list)
     planets: List[Planet] = field(default_factory=list)
     eras: List[Era] = field(default_factory=list)

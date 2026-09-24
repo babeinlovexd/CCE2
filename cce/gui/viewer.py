@@ -97,9 +97,15 @@ class ViewerWidget(QWidget):
         day_layout = QVBoxLayout(group_day)
         self.lbl_day_title = QLabel(translator.t("select_day"))
         self.lbl_day_title.setStyleSheet("font-size: 16px; font-weight: bold; color: #89b4fa;")
+
+        self.lbl_earth_date = QLabel("")
+        self.lbl_earth_date.setStyleSheet("color: #a6e3a1; font-weight: bold;")
+        self.lbl_earth_date.setVisible(False)
+
         self.lbl_astro_info = QLabel("")
         self.lbl_astro_info.setWordWrap(True)
         day_layout.addWidget(self.lbl_day_title)
+        day_layout.addWidget(self.lbl_earth_date)
         day_layout.addWidget(self.lbl_astro_info)
         details_layout.addWidget(group_day)
 
@@ -293,6 +299,14 @@ class ViewerWidget(QWidget):
         e_name = date_info['era'].name if date_info.get('era') else ""
 
         self.lbl_day_title.setText(f"{e_name} Year {date_info['year']}, {m_name} {date_info['day_of_month']}")
+
+        # Earth Sync
+        earth_dt = self.engine.tick_to_earth_date(tick)
+        if earth_dt:
+            self.lbl_earth_date.setText(f"{translator.t('lbl_earth_date')} {earth_dt.strftime('%Y-%m-%d %H:%M')}")
+            self.lbl_earth_date.setVisible(True)
+        else:
+            self.lbl_earth_date.setVisible(False)
 
         # Astro Info
         astro_text = []

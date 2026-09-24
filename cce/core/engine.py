@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from typing import Tuple, List, Dict, Optional
 from .models import World, Planet, Era, Month, Holiday, LeapRule
 
@@ -214,3 +215,28 @@ class TimeEngine:
         total_days += days_in_current_year + (day_of_month - 1)
 
         return total_days * planet.day_length_ticks
+
+    def tick_to_earth_date(self, tick: int) -> Optional[datetime]:
+        """
+        Converts a universal tick to a real-world Earth datetime.
+        Returns None if earth_sync_enabled is False.
+        """
+        if not self.world.earth_sync_enabled:
+            return None
+
+        try:
+            # Parse the ISO string to a datetime object
+            epoch = datetime.fromisoformat(self.world.earth_epoch_iso)
+        except ValueError:
+            return None
+
+        # Calculate total real seconds
+        total_seconds = tick * self.world.real_seconds_per_tick
+
+        # We might have very large numbers of seconds that exceed timedelta limits depending on the world size.
+        # timedelta max is about 999,999,999 days.
+        try:
+            target_date = epoch + timedelta(seconds=total_seconds)
+            return target_date
+        except OverflowError:
+            return None

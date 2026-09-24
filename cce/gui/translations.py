@@ -29,6 +29,16 @@ LANGUAGES = {
         "tt_world_name": "The name of your entire fantasy/sci-fi world.",
         "tt_base_tick": "The smallest, most fundamental unit of time (e.g., 'Second' or 'Pulse'). Everything is calculated in these ticks.",
         "tt_time_units": "Create your daily time hierarchy here. E.g., an 'Hour' could equal 3600 Ticks.",
+        # Earth Sync
+        "lbl_earth_sync": "Real-World Earth Synchronization",
+        "chk_earth_sync": "Enable Earth Synchronization",
+        "lbl_earth_epoch": "Earth Date at Tick 0 (YYYY-MM-DD):",
+        "lbl_real_seconds": "Real Seconds per 1 Tick:",
+        "tt_earth_sync": "Links your fantasy calendar to the real world (e.g. to celebrate character birthdays in real life).",
+        "tt_earth_epoch": "The real world date that corresponds to the very beginning of your calendar (Tick 0).",
+        "tt_real_seconds": "How many real-world seconds make up one of your base ticks. (e.g. 1.0 = normal time, 2.0 = half speed).",
+        "lbl_earth_date": "Earth Date:",
+
 
         # Planets Tab
         "col_day_length": "Day Length (Ticks)",
@@ -131,6 +141,16 @@ LANGUAGES = {
         "tt_world_name": "Der Name deiner gesamten Fantasy/Sci-Fi Welt.",
         "tt_base_tick": "Die kleinste, grundlegendste Zeiteinheit (z.B. 'Sekunde' oder 'Puls'). Alles wird intern in Ticks berechnet.",
         "tt_time_units": "Erschaffe hier deine tägliche Zeithierarchie. Z.B. entspricht eine 'Stunde' 3600 Ticks.",
+        # Earth Sync
+        "lbl_earth_sync": "Real-Welt Erd-Synchronisation",
+        "chk_earth_sync": "Erd-Synchronisation aktivieren",
+        "lbl_earth_epoch": "Erd-Datum bei Tick 0 (JJJJ-MM-TT):",
+        "lbl_real_seconds": "Echte Sekunden pro 1 Tick:",
+        "tt_earth_sync": "Verknüpft deinen Fantasy-Kalender mit der echten Welt (z.B. um Geburtstage im echten Leben zu feiern).",
+        "tt_earth_epoch": "Das reale Datum, das dem absoluten Beginn deines Kalenders (Tick 0) entspricht.",
+        "tt_real_seconds": "Wie viele echte Sekunden einem deiner Basis-Ticks entsprechen. (z.B. 1.0 = normale Zeit, 0.5 = doppelt so schnell).",
+        "lbl_earth_date": "Erd-Datum:",
+
 
         # Planets Tab
         "col_day_length": "Tageslänge (Ticks)",
