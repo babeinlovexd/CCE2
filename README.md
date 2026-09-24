@@ -1,18 +1,69 @@
 # Custom Calendar Engine (CCE)
 
-A complete, standalone Python desktop GUI application for worldbuilders, fantasy, and sci-fi authors to create custom, hierarchical calendar/time systems and track story events across multiple planets.
+A complete, standalone Python desktop GUI application designed for worldbuilders, fantasy authors, and sci-fi writers. The **Custom Calendar Engine** allows you to create completely custom, hierarchical calendar and time systems from scratch, and track story events across multiple synchronized planets.
 
-## Features
+---
 
-- **No Hardcoded 24h Limits:** The engine is based purely on universal "Ticks". You can define an entirely new time system (e.g., Decimal time with 10 hours of 100 minutes, or fantasy systems utilizing "Bells", "Breaths", and "Watches").
-- **Multi-Planet Support:** Track time synchronously across multiple planets with entirely different day lengths and year lengths (e.g., Day 45 on Planet A automatically syncs to the exact time on Planet B).
-- **Custom Eras, Months, Weekdays:** Completely flexible calendar structures with custom names, lengths, and colors.
-- **Holidays & Leap Rules:** Complex scheduling for special days (even intercalary days outside normal months) and intricate leap year exceptions.
-- **Astronomy:** Track suns (binary/trinary systems) and calculate dynamic moon phases for any number of moons.
-- **Story Event Tracking:** Create, edit, and search through story events attached to specific days. Includes real-time search filtering.
-- **Portable Saves:** Everything is saved into a single, easily portable `.worldcal` (JSON) project file.
-- **Modern Dark Theme UI:** Designed for clarity with categorized settings and tooltips.
-- **Bilingual:** Fully supports English and German natively.
+## 📖 The Core Philosophy: Universal Ticks
+
+Unlike traditional calendar apps, CCE does **not** assume that a day has 24 hours, or that an hour has 60 minutes.
+
+The entire engine is built on a concept called the **Universal Tick**.
+A "Tick" is just a mathematical counter (1, 2, 3...). As the author, **you** define what a Tick represents in your world, and every other unit of time is built by multiplying that Tick.
+
+### Example: Standard Earth Time
+- **Base Tick:** `Second`
+- **Time Units:**
+  - `Minute` = 60 Ticks
+  - `Hour` = 3600 Ticks
+- **Planet Day Length:** 86,400 Ticks (which equals 24 hours).
+
+### Example: Abstract Fantasy Time
+- **Base Tick:** `Breath`
+- **Time Units:**
+  - `Bell Strike` = 100 Ticks
+  - `Watch` = 5000 Ticks
+- **Planet Day Length:** 20,000 Ticks (which equals exactly 4 Watches).
+
+By using Ticks as the foundation, CCE can calculate exact moments in time across entirely different planetary systems seamlessly.
+
+---
+
+## 🌍 Features & User Manual
+
+### 1. Multi-Planet Synchronization
+Your story might take place across a solar system. In the **Planets & Orbit** tab, you can create multiple planets.
+- **Day Length:** Defined in Ticks. (e.g. Planet A takes 100,000 ticks to rotate, Planet B takes 50,000).
+- **Year Length:** Defined in local Days.
+- **The Magic:** In the Calendar Viewer, if you click on an event on Planet A, you can use the **Sync Dropdown** to instantly see what the exact date and time it is on Planet B at that very moment.
+
+### 2. Earth Synchronization (Real-World Mapping)
+Often, authors want to celebrate fantasy events (like a character's birthday) in the real world. CCE includes a robust **Earth Sync** feature.
+- **Enable Earth Sync** in the World Tab.
+- **Earth Date at Tick 0:** Set the real-world Gregorian date that corresponds to the very beginning of your fantasy calendar (e.g., `2011-09-13T00:00:00`).
+- **Real Seconds per Tick:** Define how fast your world moves compared to reality. If 1 Tick = 1 Real Second, put `1.0`. If time in your fantasy world moves twice as fast as the real world, put `0.5`.
+- **Result:** When you view a day in the Calendar Viewer, a bright green label will show you exactly what day that is on Earth!
+
+### 3. Eras, Months, and Weekdays
+In the **Eras, Months & Weekdays** tab, you have total freedom:
+- Create **Eras** (e.g., "Third Age", "Before the Fall") and define what year they start.
+- Create **Months or Seasons**. Give them custom names, custom day lengths, and assign them a specific color that will be used to render them in the visual calendar grid.
+- Create **Weekdays**. You can have a 3-day week, a 10-day week, or none at all.
+
+### 4. Holidays & Complex Leap Rules
+- **Holidays:** You can place holidays on specific days of specific months. Or, you can leave the Month field blank to create an **Intercalary Day**—a special day that exists outside the normal month structure (like a New Year's festival between Winter and Spring).
+- **Leap Rules:** Define rules like "Every 4 years, add 1 day to the month of Sun's Height, but skip this rule every 100 years."
+
+### 5. Astronomy: Suns and Moons
+- Track binary or trinary sun systems by defining their Dawn and Dusk ticks.
+- Add as many **Moons** as you want. Define their lunar cycle in days, and set an offset. The Calendar Viewer will mathematically calculate and display the exact Phase (e.g., "Waxing Crescent") and Illumination percentage of every moon for any given day.
+
+### 6. Visual Calendar & Story Event Tracker
+Once your world is built, click **Generate Calendar**.
+- You get a visual, color-coded grid of your months.
+- Click any day to see its details (Eras, Astronomy, Earth Sync Date).
+- Create **Story Events** for that day. Give them a title, start/end ticks, locations, and characters.
+- **Live Search:** Use the search bar at the top to search for a character's name or a location. The calendar grid will instantly highlight (in yellow) all days where that character appears!
 
 ---
 
@@ -56,7 +107,7 @@ If you want to run it manually:
 pyinstaller --noconsole --onefile --windowed --name="CustomCalendarEngine" main.py
 ```
 
-### 3. Find your Executable
+### Finding your Executable
 After the build finishes, your standalone application will be located in the newly created `dist/` folder as `CustomCalendarEngine.exe`.
 
 ---
