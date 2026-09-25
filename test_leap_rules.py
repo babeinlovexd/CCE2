@@ -3,7 +3,7 @@ from cce.core.engine import TimeEngine
 
 def test_leap_rule():
     w = World()
-    p = Planet(day_length_ticks=10)
+    p = Planet(day_length_ticks=10, is_primary=True)
     w.planets = [p]
     m = Month(id="m1", days=10)
     w.months = [m]

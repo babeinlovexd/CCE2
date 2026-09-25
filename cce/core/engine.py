@@ -13,14 +13,17 @@ class TimeEngine:
         return self.world.planets[0] if self.world.planets else None
 
     def get_days_in_year(self, planet: Planet, year: int) -> int:
-        base_days = sum(m.days for m in self.world.months)
+        if not planet.is_primary:
+            return planet.year_length_days
 
-        # Add holidays that are fixed outside of months
-        # (Assuming holidays inside months don't add to the total year length if they replace a day,
-        # but in this model, let's assume month days are fixed and extra holidays add days if not in a month)
-        # Actually, standardizing: base_days = sum of month days. Extra holidays not in month add days.
+        base_days = sum(m.days for m in self.world.months)
         for h in self.world.holidays:
-            if not h.month_id:
+            is_intercalary = not h.month_id
+            if h.month_id:
+                month_exists = any(m.id == h.month_id or m.name == h.month_id for m in self.world.months)
+                if not month_exists:
+                    is_intercalary = True
+            if is_intercalary:
                 base_days += 1
 
         leap_days = 0
@@ -91,6 +94,9 @@ class TimeEngine:
         found = False
         for month in self.world.months:
             month_days = month.days + leap_additions.get(month.id, 0)
+            # Also support matching by month name if IDs were typed manually
+            month_days += leap_additions.get(month.name, 0)
+
             if day_of_year < current_day + month_days:
                 current_month = month
                 day_of_month = day_of_year - current_day + 1 # 1-indexed
@@ -104,7 +110,15 @@ class TimeEngine:
         if not found:
             # It's an intercalary day / unassigned holiday
             for h in self.world.holidays:
-                if not h.month_id:
+                # Treat empty string or None as intercalary (outside of months)
+                # Also treat it as intercalary if the month_id doesn't match any real month ID or name
+                is_intercalary = not h.month_id
+                if h.month_id:
+                    month_exists = any(m.id == h.month_id or m.name == h.month_id for m in self.world.months)
+                    if not month_exists:
+                        is_intercalary = True
+
+                if is_intercalary:
                     if day_of_year == current_day:
                         is_holiday = True
                         holiday_obj = h
@@ -212,7 +226,7 @@ class TimeEngine:
         if month_index >= 0 and month_index < len(self.world.months):
             for i in range(month_index):
                 m = self.world.months[i]
-                days_in_current_year += m.days + leap_additions.get(m.id, 0)
+                days_in_current_year += m.days + leap_additions.get(m.id, 0) + leap_additions.get(m.name, 0)
 
         total_days += days_in_current_year + (day_of_month - 1)
 

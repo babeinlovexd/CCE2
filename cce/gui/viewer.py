@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import (QWidget, QGroupBox, QVBoxLayout, QHBoxLayout, QLabel,
                              QPushButton, QGridLayout, QScrollArea, QFrame,
-                             QLineEdit, QListWidget, QListWidgetItem, QFormLayout, QTextEdit, QComboBox)
+                             QLineEdit, QListWidget, QListWidgetItem, QFormLayout, QTextEdit, QComboBox, QSpinBox)
 from PyQt6.QtCore import Qt
 
 from cce.core.engine import TimeEngine
@@ -9,6 +9,57 @@ from cce.core.models import Event
 from .translations import translator
 from PyQt6.QtCore import QMimeData
 from PyQt6.QtGui import QDrag
+
+class TimeInputWidget(QWidget):
+    """A custom widget to input time using custom time units instead of raw ticks."""
+    def __init__(self, time_units, base_tick_name="Tick"):
+        super().__init__()
+        self.time_units = sorted(time_units, key=lambda x: x.ticks, reverse=True)
+        self.base_tick_name = base_tick_name
+        self.inputs = {}
+
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        if not self.time_units:
+            # Fallback if no custom units exist
+            self.base_input = QSpinBox()
+            self.base_input.setMaximum(999999)
+            layout.addWidget(self.base_input)
+            layout.addWidget(QLabel(self.base_tick_name))
+        else:
+            self.base_input = None
+            for unit in self.time_units:
+                spin = QSpinBox()
+                spin.setMaximum(999999)
+                self.inputs[unit.id] = spin
+                layout.addWidget(spin)
+                layout.addWidget(QLabel(unit.abbreviation or unit.name))
+
+    def get_ticks(self) -> int:
+        if self.base_input:
+            return self.base_input.value()
+
+        total_ticks = 0
+        for unit in self.time_units:
+            spin = self.inputs.get(unit.id)
+            if spin:
+                total_ticks += spin.value() * unit.ticks
+        return total_ticks
+
+    def set_ticks(self, ticks: int):
+        if self.base_input:
+            self.base_input.setValue(ticks)
+            return
+
+        remaining = ticks
+        for unit in self.time_units:
+            spin = self.inputs.get(unit.id)
+            if spin:
+                val = remaining // unit.ticks
+                spin.setValue(val)
+                remaining = remaining % unit.ticks
+
 
 class DayButton(QPushButton):
     def __init__(self, text, day_tick, parent_viewer):
@@ -162,14 +213,17 @@ class ViewerWidget(QWidget):
 
         # Event Editor Group
         self.event_editor = QGroupBox("Event Editor")
-        ev_layout = QFormLayout(self.event_editor)
-        ev_layout.setSpacing(10)
+        self.ev_layout = QFormLayout(self.event_editor)
+        self.ev_layout.setSpacing(10)
         self.ev_title = QLineEdit()
-        self.ev_start = QLineEdit()
-        self.ev_start.setPlaceholderText(translator.t("ev_start"))
-        self.ev_start.setToolTip(translator.t("tt_ev_start"))
-        self.ev_end = QLineEdit()
-        self.ev_end.setPlaceholderText(translator.t("ev_end"))
+
+        self.ev_start = TimeInputWidget(self.main_window.world.time_units, self.main_window.world.base_tick_name)
+
+        self.ev_duration_days = QSpinBox()
+        self.ev_duration_days.setMinimum(0)
+        self.ev_duration_days.setMaximum(99999)
+        self.ev_duration_days.setToolTip("Duration of the event in days.")
+
         self.ev_chars = QLineEdit()
         self.ev_chars.setToolTip(translator.t("tt_ev_chars"))
         self.ev_loc = QLineEdit()
@@ -187,13 +241,13 @@ class ViewerWidget(QWidget):
         self.ev_notes = QTextEdit()
         self.ev_notes.setMaximumHeight(80)
 
-        ev_layout.addRow(translator.t("ev_title"), self.ev_title)
-        ev_layout.addRow(translator.t("ev_start"), self.ev_start)
-        ev_layout.addRow(translator.t("ev_end"), self.ev_end)
-        ev_layout.addRow("Category/Color", self.ev_cat_layout)
-        ev_layout.addRow(translator.t("ev_chars"), self.ev_chars)
-        ev_layout.addRow(translator.t("ev_loc"), self.ev_loc)
-        ev_layout.addRow(translator.t("ev_notes"), self.ev_notes)
+        self.ev_layout.addRow(translator.t("ev_title"), self.ev_title)
+        self.ev_layout.addRow("Start Time", self.ev_start)
+        self.ev_layout.addRow("Duration (Days)", self.ev_duration_days)
+        self.ev_layout.addRow("Category/Color", self.ev_cat_layout)
+        self.ev_layout.addRow(translator.t("ev_chars"), self.ev_chars)
+        self.ev_layout.addRow(translator.t("ev_loc"), self.ev_loc)
+        self.ev_layout.addRow(translator.t("ev_notes"), self.ev_notes)
 
         btn_ev_layout = QHBoxLayout()
         btn_ev_save = QPushButton(translator.t("btn_ev_save"))
@@ -210,7 +264,7 @@ class ViewerWidget(QWidget):
         btn_ev_layout.addWidget(btn_ev_new)
         btn_ev_layout.addWidget(self.btn_ev_delete)
         btn_ev_layout.addWidget(btn_ev_save)
-        ev_layout.addRow(btn_ev_layout)
+        self.ev_layout.addRow(btn_ev_layout)
 
         details_layout.addWidget(self.event_editor)
 
@@ -226,6 +280,12 @@ class ViewerWidget(QWidget):
     def refresh_view(self):
         self.engine = TimeEngine(self.main_window.world)
         self.astro = AstronomyModel(self.main_window.world)
+
+        # Re-build time input widget just in case time_units changed in editor
+        self.ev_layout.removeRow(self.ev_start)
+        self.ev_start.deleteLater()
+        self.ev_start = TimeInputWidget(self.main_window.world.time_units, self.main_window.world.base_tick_name)
+        self.ev_layout.insertRow(1, "Start Time", self.ev_start)
 
         # Update sync combo
         self.planet_sync_combo.clear()
@@ -362,6 +422,7 @@ class ViewerWidget(QWidget):
 
     def select_day(self, tick):
         self.selected_tick = tick
+        self.new_event()
         p_planet = self.engine.get_primary_planet()
         if not p_planet:
             return
@@ -436,13 +497,22 @@ class ViewerWidget(QWidget):
                 break
 
     def load_event(self, item):
-        title = item.text()
+        event_id = item.data(Qt.ItemDataRole.UserRole)
         for ev in self.main_window.world.events:
-            if ev.title == title:
+            if ev.id == event_id:
                 self.current_event = ev
                 self.ev_title.setText(ev.title)
-                self.ev_start.setText(str(ev.start_tick))
-                self.ev_end.setText(str(ev.end_tick))
+
+                # Convert tick back to time_of_day and duration
+                p_planet = self.engine.get_primary_planet()
+                day_len = p_planet.day_length_ticks if p_planet and p_planet.day_length_ticks > 0 else 86400
+                time_of_day = ev.start_tick % day_len
+                duration_ticks = max(0, ev.end_tick - ev.start_tick)
+                duration_days = duration_ticks // day_len
+
+                self.ev_start.set_ticks(time_of_day)
+                self.ev_duration_days.setValue(duration_days)
+
                 self.ev_chars.setText(", ".join(ev.characters))
                 self.ev_loc.setText(ev.location)
                 self.ev_notes.setText(ev.notes)
@@ -467,8 +537,8 @@ class ViewerWidget(QWidget):
     def new_event(self):
         self.current_event = None
         self.ev_title.clear()
-        self.ev_start.setText(str(self.selected_tick))
-        self.ev_end.setText(str(self.selected_tick))
+        self.ev_start.set_ticks(0)
+        self.ev_duration_days.setValue(0)
         self.ev_chars.clear()
         self.ev_loc.clear()
         self.ev_notes.clear()
@@ -482,13 +552,20 @@ class ViewerWidget(QWidget):
             self.main_window.world.events.append(self.current_event)
 
         self.current_event.title = self.ev_title.text()
-        try:
-            self.current_event.start_tick = int(self.ev_start.text())
-            self.current_event.end_tick = int(self.ev_end.text())
-        except ValueError:
-            from PyQt6.QtWidgets import QMessageBox
-            QMessageBox.warning(self, 'Invalid Input', 'Tick values must be integers.')
-            return
+
+        p_planet = self.engine.get_primary_planet()
+        day_len = p_planet.day_length_ticks if p_planet and p_planet.day_length_ticks > 0 else 86400
+
+        # We need the absolute start of the day
+        start_of_day_tick = self.selected_tick - (self.selected_tick % day_len)
+
+        # Apply the time of day from input widget
+        time_of_day_ticks = self.ev_start.get_ticks()
+
+        self.current_event.start_tick = start_of_day_tick + time_of_day_ticks
+        duration_ticks = self.ev_duration_days.value() * day_len
+        self.current_event.end_tick = self.current_event.start_tick + duration_ticks
+
         self.current_event.characters = [c.strip() for c in self.ev_chars.text().split(",") if c.strip()]
         self.current_event.location = self.ev_loc.text()
         self.current_event.category = self.ev_category.currentText()
@@ -498,6 +575,7 @@ class ViewerWidget(QWidget):
 
         p_planet = self.engine.get_primary_planet()
         self.load_events_for_day(self.selected_tick, p_planet.day_length_ticks if p_planet else 86400)
+        self.render_calendar()
 
     def delete_event(self):
         if self.current_event in self.main_window.world.events:
@@ -578,7 +656,9 @@ class ViewerWidget(QWidget):
         self.select_day(day_tick)
 
         # Select event in list
-        items = self.event_list.findItems(ev.title, Qt.MatchFlag.MatchExactly)
-        if items:
-            self.event_list.setCurrentItem(items[0])
-            self.load_event(items[0])
+        for i in range(self.event_list.count()):
+            list_item = self.event_list.item(i)
+            if list_item.data(Qt.ItemDataRole.UserRole) == ev.id:
+                self.event_list.setCurrentRow(i)
+                self.load_event(list_item)
+                break

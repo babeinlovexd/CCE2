@@ -340,7 +340,9 @@ class EditorWidget(QWidget):
         p = self.main_window.world.planets[r]
         p.name = self.planets_table.item(r, 0).text()
         try:
-            p.day_length_ticks = int(self.planets_table.item(r, 1).text())
+            dl = int(self.planets_table.item(r, 1).text())
+            if dl <= 0: dl = 1
+            p.day_length_ticks = dl
             p.year_length_days = int(self.planets_table.item(r, 2).text())
         except ValueError:
             QMessageBox.warning(self, 'Invalid Input', 'Please enter a valid number.')
