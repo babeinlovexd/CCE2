@@ -42,12 +42,27 @@ class TimeEngine:
 
         return base_days + leap_days
 
+    def get_days_in_month(self, year: int, month: Month) -> int:
+        days = month.days
+        for rule in self.world.leap_rules:
+            if rule.interval_years > 0 and year % rule.interval_years == 0:
+                is_excluded = False
+                if getattr(rule, 'exclude_interval', 0) and getattr(rule, 'exclude_interval', 0) > 0 and year % getattr(rule, 'exclude_interval', 0) == 0:
+                    is_excluded = True
+                    if getattr(rule, 'force_include_interval', 0) and getattr(rule, 'force_include_interval', 0) > 0 and year % getattr(rule, 'force_include_interval', 0) == 0:
+                        is_excluded = False
+
+                if not is_excluded:
+                    if rule.month_id_to_append == month.id or rule.month_id_to_append == month.name:
+                        days += rule.days_to_add
+        return days
+
     def tick_to_date(self, planet: Planet, tick: int) -> Dict:
         """
         Convert an absolute tick to a specific date for a planet.
         Returns: year, month, day_of_month, day_of_year, time_of_day_ticks, etc.
         """
-        if planet.day_length_ticks == 0:
+        if planet.day_length_ticks <= 0:
             return {}
 
         total_days = tick // planet.day_length_ticks
@@ -61,6 +76,8 @@ class TimeEngine:
         if days_remaining >= 0:
             while True:
                 days_this_year = self.get_days_in_year(planet, year)
+                if days_this_year <= 0:
+                    days_this_year = 1 # Fallback to prevent infinite loop
                 if days_remaining < days_this_year:
                     break
                 days_remaining -= days_this_year
@@ -69,6 +86,8 @@ class TimeEngine:
             while days_remaining < 0:
                 year -= 1
                 days_this_year = self.get_days_in_year(planet, year)
+                if days_this_year <= 0:
+                    days_this_year = 1 # Fallback to prevent infinite loop
                 days_remaining += days_this_year
 
         day_of_year = days_remaining # 0-indexed
@@ -78,24 +97,9 @@ class TimeEngine:
         current_month = None
         day_of_month = 0
 
-        # Apply leap rules for this year to know which months have extra days
-        leap_additions = {}
-        for rule in self.world.leap_rules:
-            if rule.interval_years > 0 and year % rule.interval_years == 0:
-                is_excluded = False
-                if rule.exclude_interval and rule.exclude_interval > 0 and year % rule.exclude_interval == 0:
-                    is_excluded = True
-                    if rule.force_include_interval and rule.force_include_interval > 0 and year % rule.force_include_interval == 0:
-                        is_excluded = False
-
-                if not is_excluded:
-                    leap_additions[rule.month_id_to_append] = leap_additions.get(rule.month_id_to_append, 0) + rule.days_to_add
-
         found = False
         for month in self.world.months:
-            month_days = month.days + leap_additions.get(month.id, 0)
-            # Also support matching by month name if IDs were typed manually
-            month_days += leap_additions.get(month.name, 0)
+            month_days = self.get_days_in_month(year, month)
 
             if day_of_year < current_day + month_days:
                 current_month = month
@@ -129,14 +133,38 @@ class TimeEngine:
         # Calculate weekday
         weekday = None
         if self.world.weekdays:
-            # Need to know total days since epoch that counted as weekdays
-            # For simplicity, we just modulo total_days if all days count.
-            # If holidays don't count, we need to subtract them.
-            # A full implementation would count days from 0.
-            # Simplified for now: just count all days if all days are weekdays.
             week_len = len(self.world.weekdays)
             if week_len > 0:
-                weekday_index = total_days % week_len
+                non_wd_holidays_per_year = sum(1 for h in self.world.holidays if not h.counts_as_weekday)
+                skipped_days = 0
+                if non_wd_holidays_per_year > 0:
+                    if year > 0:
+                        skipped_days += year * non_wd_holidays_per_year
+                    elif year < 0:
+                        skipped_days -= abs(year) * non_wd_holidays_per_year
+
+                    curr_d = 0
+                    for month in self.world.months:
+                        m_days = self.get_days_in_month(year, month)
+                        if day_of_year < curr_d + m_days:
+                            break
+                        curr_d += m_days
+
+                    for h in self.world.holidays:
+                        is_intercalary = not h.month_id
+                        if h.month_id:
+                            month_exists = any(m.id == h.month_id or m.name == h.month_id for m in self.world.months)
+                            if not month_exists:
+                                is_intercalary = True
+                        if is_intercalary and not h.counts_as_weekday:
+                            if day_of_year > curr_d:
+                                skipped_days += 1
+                            elif day_of_year == curr_d and is_holiday and holiday_obj == h:
+                                skipped_days += 1
+                            curr_d += 1
+
+                effective_days = total_days - skipped_days
+                weekday_index = effective_days % week_len
                 weekday = self.world.weekdays[weekday_index]
 
         # Determine era

@@ -20,17 +20,20 @@ class EditorWidget(QWidget):
         self.btn_save = QPushButton(translator.t("btn_save"))
         self.btn_open = QPushButton(translator.t("btn_open"))
         self.btn_export = QPushButton(translator.t("btn_export"))
+        self.btn_export_ics = QPushButton("Export iCal")
         self.btn_generate = QPushButton(translator.t("btn_generate"))
         self.btn_generate.setObjectName("primaryAction")
 
         self.btn_save.clicked.connect(self.save_project)
         self.btn_open.clicked.connect(self.open_project)
         self.btn_export.clicked.connect(self.export_timeline)
+        self.btn_export_ics.clicked.connect(self.export_ical)
         self.btn_generate.clicked.connect(self.main_window.switch_to_viewer)
 
         top_bar.addWidget(self.btn_open)
         top_bar.addWidget(self.btn_save)
         top_bar.addWidget(self.btn_export)
+        top_bar.addWidget(self.btn_export_ics)
         top_bar.addStretch()
         self.btn_generate.setMinimumHeight(35)
         top_bar.addWidget(self.btn_generate)
@@ -133,6 +136,70 @@ class EditorWidget(QWidget):
             QMessageBox.information(self, "Success", translator.t("export_success"))
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to export:\n{e}")
+
+
+    def export_ical(self):
+        self.flush_state_to_model()
+        if not self.main_window.world.events:
+            from PyQt6.QtWidgets import QMessageBox, QFileDialog
+            QMessageBox.information(self, "Export", "No events to export.")
+            return
+
+        if not self.main_window.world.earth_sync_enabled:
+            from PyQt6.QtWidgets import QMessageBox
+            QMessageBox.warning(self, "Export Error", "Earth Sync must be enabled and valid to export to real-world iCal format.")
+            return
+
+        from PyQt6.QtWidgets import QFileDialog
+        fname, _ = QFileDialog.getSaveFileName(self, "Export iCal", "timeline.ics", "iCalendar Files (*.ics);;All Files (*)")
+        if not fname:
+            return
+
+        from cce.core.engine import TimeEngine
+        engine = TimeEngine(self.main_window.world)
+
+        try:
+            import datetime
+            with open(fname, 'w', encoding='utf-8') as f:
+                f.write("BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Chronix//Custom Calendar Engine//EN\n")
+
+                for ev in self.main_window.world.events:
+                    start_dt = engine.tick_to_earth_date(ev.start_tick)
+                    end_dt = engine.tick_to_earth_date(ev.end_tick)
+                    if not start_dt:
+                        continue
+                    if not end_dt: end_dt = start_dt + datetime.timedelta(hours=1)
+
+                    dtstamp = datetime.datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+                    dtstart = start_dt.strftime("%Y%m%dT%H%M%SZ")
+                    dtend = end_dt.strftime("%Y%m%dT%H%M%SZ")
+
+                    f.write("BEGIN:VEVENT\n")
+                    f.write(f"UID:{ev.id}@chronix\n")
+                    f.write(f"DTSTAMP:{dtstamp}\n")
+                    f.write(f"DTSTART:{dtstart}\n")
+                    f.write(f"DTEND:{dtend}\n")
+                    f.write(f"SUMMARY:{ev.title}\n")
+
+                    desc = ev.notes.replace("\n", "\\n")
+                    if ev.characters:
+                        desc += f"\\nCharacters: {', '.join(ev.characters)}"
+                    if desc:
+                        f.write(f"DESCRIPTION:{desc}\n")
+
+                    if ev.location:
+                        f.write(f"LOCATION:{ev.location}\n")
+                    if getattr(ev, 'category', ''):
+                        f.write(f"CATEGORIES:{ev.category}\n")
+
+                    f.write("END:VEVENT\n")
+
+                f.write("END:VCALENDAR\n")
+            from PyQt6.QtWidgets import QMessageBox
+            QMessageBox.information(self, "Success", "iCal exported successfully!")
+        except Exception as e:
+            from PyQt6.QtWidgets import QMessageBox
+            QMessageBox.critical(self, "Error", f"Failed to export iCal:\n{e}")
 
     def flush_state_to_model(self):
         self.main_window.world.earth_sync_enabled = self.chk_earth_sync.isChecked()
@@ -253,7 +320,6 @@ class EditorWidget(QWidget):
             self.units_table.setItem(r, 1, QTableWidgetItem(u.abbreviation))
             self.units_table.setItem(r, 2, QTableWidgetItem(str(u.ticks)))
 
-        self.main_window.mark_unsaved()
         self.units_table.blockSignals(False)
 
     def add_time_unit(self):
@@ -275,7 +341,10 @@ class EditorWidget(QWidget):
                 u.ticks = int(self.units_table.item(r, 2).text())
             except ValueError:
                 QMessageBox.warning(self, 'Invalid Input', 'Please enter a valid number.')
-                self.refresh_view()
+                self.units_table.blockSignals(True)
+                self.units_table.item(r, 2).setText(str(self.main_window.world.time_units[r].ticks))
+                self.units_table.blockSignals(False)
+                return
 
     def update_earth_sync_state(self):
         is_enabled = self.chk_earth_sync.isChecked()
@@ -322,7 +391,6 @@ class EditorWidget(QWidget):
             chk.setFlags(Qt.ItemFlag.ItemIsUserCheckable | Qt.ItemFlag.ItemIsEnabled)
             chk.setCheckState(Qt.CheckState.Checked if p.is_primary else Qt.CheckState.Unchecked)
             self.planets_table.setItem(r, 3, chk)
-        self.main_window.mark_unsaved()
         self.planets_table.blockSignals(False)
 
     def add_planet(self):
@@ -345,8 +413,11 @@ class EditorWidget(QWidget):
             p.day_length_ticks = dl
             p.year_length_days = int(self.planets_table.item(r, 2).text())
         except ValueError:
-            QMessageBox.warning(self, 'Invalid Input', 'Please enter a valid number.')
-            self.refresh_view()
+                QMessageBox.warning(self, 'Invalid Input', 'Please enter a valid number.')
+                self.planets_table.blockSignals(True)
+                self.planets_table.item(r, 1).setText(str(self.main_window.world.planets[r].day_length_ticks))
+                self.planets_table.blockSignals(False)
+                return
 
         # Handle exclusive primary selection
         if item.column() == 3:
@@ -357,6 +428,7 @@ class EditorWidget(QWidget):
                 self.populate_planets()
             else:
                 p.is_primary = False
+            self.main_window.mark_unsaved()
 
     # --- Calendar (Eras, Months, Weekdays) ---
     def setup_calendar_tab(self):
@@ -373,7 +445,7 @@ class EditorWidget(QWidget):
         self.era_table.setToolTip(translator.t("tt_eras"))
         era_layout.addWidget(self.era_table)
         btn_add_era = QPushButton(translator.t("btn_add_era"))
-        btn_add_era.clicked.connect(lambda: (self.main_window.world.eras.append(Era(name="New Era")), self.populate_eras()))
+        btn_add_era.clicked.connect(lambda: (self.main_window.world.eras.append(Era(name="New Era")), self.populate_eras(), self.main_window.mark_unsaved()))
         era_layout.addWidget(btn_add_era)
         self.era_table.itemChanged.connect(self.update_eras)
 
@@ -386,9 +458,10 @@ class EditorWidget(QWidget):
         self.month_table.setToolTip(translator.t("tt_months"))
         month_layout.addWidget(self.month_table)
         btn_add_month = QPushButton(translator.t("btn_add_month"))
-        btn_add_month.clicked.connect(lambda: (self.main_window.world.months.append(Month(name="New Month")), self.populate_months()))
+        btn_add_month.clicked.connect(lambda: (self.main_window.world.months.append(Month(name="New Month")), self.populate_months(), self.main_window.mark_unsaved()))
         month_layout.addWidget(btn_add_month)
         self.month_table.itemChanged.connect(self.update_months)
+        self.month_table.itemDoubleClicked.connect(self.pick_month_color)
 
         # Weekdays
         group_wd = QGroupBox(translator.t("lbl_weekdays"))
@@ -399,7 +472,7 @@ class EditorWidget(QWidget):
         self.weekday_table.setToolTip(translator.t("tt_weekdays"))
         weekday_layout.addWidget(self.weekday_table)
         btn_add_wd = QPushButton(translator.t("btn_add_wd"))
-        btn_add_wd.clicked.connect(lambda: (self.main_window.world.weekdays.append(Weekday(name="New Day")), self.populate_weekdays()))
+        btn_add_wd.clicked.connect(lambda: (self.main_window.world.weekdays.append(Weekday(name="New Day")), self.populate_weekdays(), self.main_window.mark_unsaved()))
         weekday_layout.addWidget(btn_add_wd)
         self.weekday_table.itemChanged.connect(self.update_weekdays)
 
@@ -418,7 +491,6 @@ class EditorWidget(QWidget):
             chk.setFlags(Qt.ItemFlag.ItemIsUserCheckable | Qt.ItemFlag.ItemIsEnabled)
             chk.setCheckState(Qt.CheckState.Checked if e.includes_year_zero else Qt.CheckState.Unchecked)
             self.era_table.setItem(r, 3, chk)
-        self.main_window.mark_unsaved()
         self.era_table.blockSignals(False)
 
     def update_eras(self, item):
@@ -429,8 +501,11 @@ class EditorWidget(QWidget):
         try:
             e.start_year = int(self.era_table.item(r, 2).text())
         except ValueError:
-            QMessageBox.warning(self, 'Invalid Input', 'Please enter a valid number.')
-            self.refresh_view()
+                QMessageBox.warning(self, 'Invalid Input', 'Please enter a valid number.')
+                self.era_table.blockSignals(True)
+                self.era_table.item(r, 2).setText(str(self.main_window.world.eras[r].start_year))
+                self.era_table.blockSignals(False)
+                return
         if item.column() == 3:
             e.includes_year_zero = (item.checkState() == Qt.CheckState.Checked)
 
@@ -441,7 +516,6 @@ class EditorWidget(QWidget):
             self.month_table.setItem(r, 0, QTableWidgetItem(m.name))
             self.month_table.setItem(r, 1, QTableWidgetItem(str(m.days)))
             self.month_table.setItem(r, 2, QTableWidgetItem(m.color))
-        self.main_window.mark_unsaved()
         self.month_table.blockSignals(False)
 
     def update_months(self):
@@ -452,15 +526,27 @@ class EditorWidget(QWidget):
                 m.days = int(self.month_table.item(r, 1).text())
             except ValueError:
                 QMessageBox.warning(self, 'Invalid Input', 'Please enter a valid number.')
-                self.refresh_view()
+                self.month_table.blockSignals(True)
+                self.month_table.item(r, 1).setText(str(self.main_window.world.months[r].days))
+                self.month_table.blockSignals(False)
+                return
             m.color = self.month_table.item(r, 2).text()
+
+    def pick_month_color(self, item):
+        if item.column() == 2:
+            from PyQt6.QtWidgets import QColorDialog
+            from PyQt6.QtGui import QColor
+            color = QColorDialog.getColor(QColor(item.text()), self, 'Select Month Color')
+            if color.isValid():
+                item.setText(color.name())
+                self.update_months()
+                self.main_window.mark_unsaved()
 
     def populate_weekdays(self):
         self.weekday_table.blockSignals(True)
         self.weekday_table.setRowCount(len(self.main_window.world.weekdays))
         for r, w in enumerate(self.main_window.world.weekdays):
             self.weekday_table.setItem(r, 0, QTableWidgetItem(w.name))
-        self.main_window.mark_unsaved()
         self.weekday_table.blockSignals(False)
 
     def update_weekdays(self):
@@ -484,7 +570,7 @@ class EditorWidget(QWidget):
         self.holiday_table.setToolTip(translator.t("tt_holidays"))
         hol_layout.addWidget(self.holiday_table)
         btn_add_hol = QPushButton(translator.t("btn_add_hol"))
-        btn_add_hol.clicked.connect(lambda: (self.main_window.world.holidays.append(Holiday(name="New Holiday")), self.populate_holidays()))
+        btn_add_hol.clicked.connect(lambda: (self.main_window.world.holidays.append(Holiday(name="New Holiday")), self.populate_holidays(), self.main_window.mark_unsaved()))
         hol_layout.addWidget(btn_add_hol)
         self.holiday_table.itemChanged.connect(self.update_holidays)
         layout.addWidget(group_hol)
@@ -499,7 +585,7 @@ class EditorWidget(QWidget):
         self.leap_table.setToolTip(translator.t("tt_leap"))
         leap_layout.addWidget(self.leap_table)
         btn_add_leap = QPushButton(translator.t("btn_add_leap"))
-        btn_add_leap.clicked.connect(lambda: (self.main_window.world.leap_rules.append(LeapRule()), self.populate_leap_rules()))
+        btn_add_leap.clicked.connect(lambda: (self.main_window.world.leap_rules.append(LeapRule()), self.populate_leap_rules(), self.main_window.mark_unsaved()))
         leap_layout.addWidget(btn_add_leap)
         self.leap_table.itemChanged.connect(self.update_leap_rules)
         layout.addWidget(group_leap)
@@ -526,7 +612,6 @@ class EditorWidget(QWidget):
             chk.setFlags(Qt.ItemFlag.ItemIsUserCheckable | Qt.ItemFlag.ItemIsEnabled)
             chk.setCheckState(Qt.CheckState.Checked if h.counts_as_weekday else Qt.CheckState.Unchecked)
             self.holiday_table.setItem(r, 3, chk)
-        self.main_window.mark_unsaved()
         self.holiday_table.blockSignals(False)
 
     def update_holidays(self, item):
@@ -551,8 +636,11 @@ class EditorWidget(QWidget):
         try:
             h.day_in_month = int(self.holiday_table.item(r, 2).text())
         except ValueError:
-            QMessageBox.warning(self, 'Invalid Input', 'Please enter a valid number.')
-            self.refresh_view()
+                QMessageBox.warning(self, 'Invalid Input', 'Please enter a valid number.')
+                self.holiday_table.blockSignals(True)
+                self.holiday_table.item(r, 2).setText(str(self.main_window.world.holidays[r].day_in_month))
+                self.holiday_table.blockSignals(False)
+                return
 
         if item.column() == 3:
             h.counts_as_weekday = (item.checkState() == Qt.CheckState.Checked)
@@ -566,7 +654,6 @@ class EditorWidget(QWidget):
             self.leap_table.setItem(r, 2, QTableWidgetItem(str(l.days_to_add)))
             self.leap_table.setItem(r, 3, QTableWidgetItem(str(l.exclude_interval)))
             self.leap_table.setItem(r, 4, QTableWidgetItem(str(l.force_include_interval)))
-        self.main_window.mark_unsaved()
         self.leap_table.blockSignals(False)
 
     def update_leap_rules(self):
@@ -580,7 +667,10 @@ class EditorWidget(QWidget):
                 l.force_include_interval = int(self.leap_table.item(r, 4).text() or "0")
             except ValueError:
                 QMessageBox.warning(self, 'Invalid Input', 'Please enter a valid number.')
-                self.refresh_view()
+                self.leap_table.blockSignals(True)
+                self.leap_table.item(r, 0).setText(str(self.main_window.world.leap_rules[r].interval_years))
+                self.leap_table.blockSignals(False)
+                return
 
     # --- Astronomy ---
     def setup_astronomy_tab(self):
@@ -598,7 +688,7 @@ class EditorWidget(QWidget):
         self.sun_table.setToolTip(translator.t("tt_suns"))
         sun_layout.addWidget(self.sun_table)
         btn_add_sun = QPushButton(translator.t("btn_add_sun"))
-        btn_add_sun.clicked.connect(lambda: (self.main_window.world.suns.append(Sun(name="New Sun")), self.populate_suns()))
+        btn_add_sun.clicked.connect(lambda: (self.main_window.world.suns.append(Sun(name="New Sun")), self.populate_suns(), self.main_window.mark_unsaved()))
         sun_layout.addWidget(btn_add_sun)
         self.sun_table.itemChanged.connect(self.update_suns)
         layout.addWidget(group_sun)
@@ -613,7 +703,7 @@ class EditorWidget(QWidget):
         self.moon_table.setToolTip(translator.t("tt_moons"))
         moon_layout.addWidget(self.moon_table)
         btn_add_moon = QPushButton(translator.t("btn_add_moon"))
-        btn_add_moon.clicked.connect(lambda: (self.main_window.world.moons.append(Moon(name="New Moon")), self.populate_moons()))
+        btn_add_moon.clicked.connect(lambda: (self.main_window.world.moons.append(Moon(name="New Moon")), self.populate_moons(), self.main_window.mark_unsaved()))
         moon_layout.addWidget(btn_add_moon)
         self.moon_table.itemChanged.connect(self.update_moons)
         layout.addWidget(group_moon)
@@ -625,7 +715,6 @@ class EditorWidget(QWidget):
             self.sun_table.setItem(r, 0, QTableWidgetItem(s.name))
             self.sun_table.setItem(r, 1, QTableWidgetItem(str(s.twilight_dawn_ticks)))
             self.sun_table.setItem(r, 2, QTableWidgetItem(str(s.twilight_dusk_ticks)))
-        self.main_window.mark_unsaved()
         self.sun_table.blockSignals(False)
 
     def update_suns(self):
@@ -637,7 +726,10 @@ class EditorWidget(QWidget):
                 s.twilight_dusk_ticks = int(self.sun_table.item(r, 2).text())
             except ValueError:
                 QMessageBox.warning(self, 'Invalid Input', 'Please enter a valid number.')
-                self.refresh_view()
+                self.sun_table.blockSignals(True)
+                self.sun_table.item(r, 1).setText(str(self.main_window.world.suns[r].twilight_dawn_ticks))
+                self.sun_table.blockSignals(False)
+                return
 
     def populate_moons(self):
         self.moon_table.blockSignals(True)
@@ -646,7 +738,6 @@ class EditorWidget(QWidget):
             self.moon_table.setItem(r, 0, QTableWidgetItem(m.name))
             self.moon_table.setItem(r, 1, QTableWidgetItem(str(m.cycle_days)))
             self.moon_table.setItem(r, 2, QTableWidgetItem(str(m.phase_offset)))
-        self.main_window.mark_unsaved()
         self.moon_table.blockSignals(False)
 
     def update_moons(self):
@@ -658,4 +749,7 @@ class EditorWidget(QWidget):
                 m.phase_offset = float(self.moon_table.item(r, 2).text())
             except ValueError:
                 QMessageBox.warning(self, 'Invalid Input', 'Please enter a valid number.')
-                self.refresh_view()
+                self.moon_table.blockSignals(True)
+                self.moon_table.item(r, 1).setText(str(self.main_window.world.moons[r].cycle_days))
+                self.moon_table.blockSignals(False)
+                return
