@@ -27,7 +27,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Chronix")
         self.resize(1200, 800)
 
-        icon_path = get_resource_path(os.path.join("assets", "icon.png"))
+        icon_path = get_resource_path(os.path.join("assets", "chronix_logo.png"))
         if os.path.exists(icon_path):
             self.setWindowIcon(QIcon(icon_path))
 
@@ -41,14 +41,13 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.central_widget)
         self.layout = QVBoxLayout(self.central_widget)
 
-        # --- LOGO BANNER ---
+                        # --- LOGO BANNER ---
         self.logo_label = QLabel()
         self.logo_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        if os.path.exists(icon_path):
-            pixmap = QPixmap(icon_path)
-            # Scale logo to a reasonable height, e.g., 80px, keeping aspect ratio
-            scaled_pixmap = pixmap.scaledToHeight(80, Qt.TransformationMode.SmoothTransformation)
-            self.logo_label.setPixmap(scaled_pixmap)
+        self.logo_path = get_resource_path(os.path.join("assets", "chronix_breit.png"))
+        self.icon_path = icon_path
+
+        self.update_logo_size() # Initial sizing
 
         self.layout.addWidget(self.logo_label)
         # -------------------
@@ -95,6 +94,24 @@ class MainWindow(QMainWindow):
 
         return reply == QMessageBox.StandardButton.Yes
 
+    def update_logo_size(self):
+        # Calculate maximum height based on window height, or set a dynamic range
+        # E.g. at least 80, at most 200, typically 15% of window height
+        target_height = max(80, min(200, int(self.height() * 0.15)))
+
+        if os.path.exists(self.logo_path):
+            pixmap = QPixmap(self.logo_path)
+            scaled_pixmap = pixmap.scaledToHeight(target_height, Qt.TransformationMode.SmoothTransformation)
+            self.logo_label.setPixmap(scaled_pixmap)
+        elif os.path.exists(self.icon_path):
+            pixmap = QPixmap(self.icon_path)
+            scaled_pixmap = pixmap.scaledToHeight(target_height, Qt.TransformationMode.SmoothTransformation)
+            self.logo_label.setPixmap(scaled_pixmap)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self.update_logo_size()
+
     def closeEvent(self, event):
         if self.check_unsaved_changes():
             event.accept()
@@ -138,7 +155,7 @@ class MainWindow(QMainWindow):
 
 def run_app():
     app = QApplication(sys.argv)
-    icon_path = get_resource_path(os.path.join("assets", "icon.png"))
+    icon_path = get_resource_path(os.path.join("assets", "chronix_logo.png"))
     if os.path.exists(icon_path):
         app.setWindowIcon(QIcon(icon_path))
     app.setStyleSheet(MODERN_DARK_STYLE)

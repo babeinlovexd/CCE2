@@ -80,11 +80,13 @@ class TimeEngine:
                     days_this_year = 1
                 if days_remaining < days_this_year:
                     break
-                if days_remaining > days_this_year * 10:
-                     skip_years = days_remaining // (days_this_year + 1)
-                     year += max(1, skip_years)
-                     days_remaining -= skip_years * days_this_year
-                     continue
+                # Only use fast-forwarding if there are NO leap rules, otherwise iterate exactly
+                if not self.world.leap_rules and days_remaining > days_this_year * 10:
+                    skip_years = days_remaining // days_this_year
+                    year += skip_years
+                    days_remaining -= skip_years * days_this_year
+                    continue
+
                 days_remaining -= days_this_year
                 year += 1
         else:
@@ -93,11 +95,13 @@ class TimeEngine:
                 days_this_year = self.get_days_in_year(planet, year)
                 if days_this_year <= 0:
                     days_this_year = 1
-                if days_remaining < -days_this_year * 10:
-                    skip_years = (-days_remaining) // (days_this_year + 1)
-                    year -= max(1, skip_years)
+
+                if not self.world.leap_rules and days_remaining < -days_this_year * 10:
+                    skip_years = (-days_remaining) // days_this_year
+                    year -= skip_years
                     days_remaining += skip_years * days_this_year
                     continue
+
                 days_remaining += days_this_year
 
         day_of_year = days_remaining # 0-indexed
