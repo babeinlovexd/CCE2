@@ -247,8 +247,8 @@ class ViewerWidget(QWidget):
         self.ev_cat_layout.addWidget(self.ev_category)
         self.ev_cat_layout.addWidget(self.ev_color)
 
-                # Recurrence
-        from PyQt6.QtWidgets import QCheckBox, QSpinBox
+        # Recurrence
+        from PyQt6.QtWidgets import QCheckBox
         self.ev_rec_layout = QHBoxLayout()
         self.chk_recurring = QCheckBox("Repeat every")
         self.spin_recur_interval = QSpinBox()
