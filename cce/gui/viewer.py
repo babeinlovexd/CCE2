@@ -202,14 +202,9 @@ class ViewerWidget(QWidget):
 
         self.lbl_astro_info = QLabel("")
         self.lbl_astro_info.setWordWrap(True)
-
-        self.lbl_sun_info = QLabel("")
-        self.lbl_sun_info.setWordWrap(True)
-
         day_layout.addWidget(self.lbl_day_title)
         day_layout.addWidget(self.lbl_earth_date)
         day_layout.addWidget(self.lbl_astro_info)
-        day_layout.addWidget(self.lbl_sun_info)
         details_layout.addWidget(group_day)
 
         # Events List Group
@@ -228,6 +223,7 @@ class ViewerWidget(QWidget):
 
         self.ev_start = TimeInputWidget(self.main_window.world.time_units, self.main_window.world.base_tick_name)
 
+        from PyQt6.QtWidgets import QSpinBox
         self.ev_duration_days = QSpinBox()
         self.ev_duration_days.setMinimum(0)
         self.ev_duration_days.setMaximum(99999)
@@ -247,8 +243,8 @@ class ViewerWidget(QWidget):
         self.ev_cat_layout.addWidget(self.ev_category)
         self.ev_cat_layout.addWidget(self.ev_color)
 
-        # Recurrence
-        from PyQt6.QtWidgets import QCheckBox
+                # Recurrence
+        from PyQt6.QtWidgets import QCheckBox, QSpinBox
         self.ev_rec_layout = QHBoxLayout()
         self.chk_recurring = QCheckBox("Repeat every")
         self.spin_recur_interval = QSpinBox()
@@ -367,9 +363,7 @@ class ViewerWidget(QWidget):
                 for day in range(1, days_in_month + 1):
                     exact_tick = self.engine.date_to_tick(p_planet, self.current_year, m_idx, day) if p_planet else 0
                     btn = DayButton(str(day), exact_tick, self)
-                    from PyQt6.QtWidgets import QSizePolicy
-                    btn.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-                    btn.setMinimumSize(30, 30)
+                    btn.setFixedSize(30, 30) # Smaller buttons for yearly view
                     btn.setStyleSheet(f"background-color: {month.color}; font-size: 10px;")
 
                     if p_planet:
@@ -442,9 +436,7 @@ class ViewerWidget(QWidget):
             for day in range(1, days_in_month + 1):
                 exact_tick = self.engine.date_to_tick(p_planet, self.current_year, self.current_month_index, day) if p_planet else 0
                 btn = DayButton(str(day), exact_tick, self)
-                from PyQt6.QtWidgets import QSizePolicy
-                btn.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-                btn.setMinimumSize(60, 60)
+                btn.setFixedSize(60, 60)
                 btn.setStyleSheet(f"background-color: {month.color};")
 
                 if p_planet:
@@ -479,7 +471,7 @@ class ViewerWidget(QWidget):
                     moons_info = self.astro.get_moon_phases_for_tick(exact_tick)
                     moon_tooltip = ""
                     for m_id, p_info in moons_info.items():
-                        moon_tooltip += f"{p_info['moon'].name}: {p_info['phase_name']} ({int(p_info['phase_percent']*100)}%)\\n"
+                        moon_tooltip += f"{p_info['moon'].name}: {p_info['phase_name']} ({int(p_info['phase_percent']*100)}%)\n"
                     if moon_tooltip:
                         btn.setToolTip(moon_tooltip.strip())
                         btn.setText(f"{day}\n🌘")
@@ -544,51 +536,6 @@ class ViewerWidget(QWidget):
             astro_text.append(f"{moon.name}: {mp['phase_name']} ({int(mp['illumination']*100)}%)")
         self.lbl_astro_info.setText(" | ".join(astro_text))
 
-        # Sun Info (Graphical text representation for now as Qt HTML doesn't support linear-gradient)
-        sun_layout_html = ""
-        for sun in self.main_window.world.suns:
-            dl = p_planet.day_length_ticks if p_planet and p_planet.day_length_ticks > 0 else 86400
-            dawn_pct = (sun.twilight_dawn_ticks / dl) * 100
-            dusk_pct = (sun.twilight_dusk_ticks / dl) * 100
-
-            dawn_pct = max(0, min(100, dawn_pct))
-            dusk_pct = max(0, min(100, dusk_pct))
-
-            if dawn_pct > dusk_pct:
-                dawn_pct, dusk_pct = dusk_pct, dawn_pct
-
-            # Simple text-based bar
-            bar_len = 30
-            dawn_idx = int((dawn_pct / 100) * bar_len)
-            dusk_idx = int((dusk_pct / 100) * bar_len)
-
-            bar = ""
-            for i in range(bar_len):
-                if i < dawn_idx or i > dusk_idx:
-                    bar += "🌙"
-                else:
-                    bar += "☀️"
-
-            sun_layout_html += f"""
-            <div style='margin-bottom: 5px;'>
-                <span style='color: #cdd6f4; font-size: 11px;'>☀️ {sun.name}</span><br/>
-                <span style='font-size: 8px;'>{bar}</span>
-                <div style='display: flex; justify-content: space-between; font-size: 9px; color: #a6adc8;'>
-                    <span>Dawn ({sun.twilight_dawn_ticks})</span>
-                    <span>Dusk ({sun.twilight_dusk_ticks})</span>
-                </div>
-            </div>
-            """
-
-        if not self.main_window.world.suns:
-            if hasattr(self, 'lbl_sun_info'):
-                self.lbl_sun_info.setText("")
-        else:
-            if not hasattr(self, 'lbl_sun_info'):
-                pass
-            else:
-                self.lbl_sun_info.setText(sun_layout_html)
-
         self.update_sync_display()
         self.load_events_for_day(tick, p_planet.day_length_ticks)
 
@@ -610,28 +557,14 @@ class ViewerWidget(QWidget):
         end_bound = start_bound + day_length
 
         for ev in self.main_window.world.events:
-            occurs_today = False
             if ev.start_tick >= start_bound and ev.start_tick < end_bound:
-                occurs_today = True
-            elif getattr(ev, 'is_recurring', False) and ev.start_tick < end_bound:
-                p_planet = self.engine.get_primary_planet()
-                day_len = p_planet.day_length_ticks if p_planet and p_planet.day_length_ticks > 0 else 86400
-                interval = getattr(ev, 'recurrence_interval_days', 365) * day_len
-                if interval > 0:
-                    start_of_event_day = ev.start_tick - (ev.start_tick % day_len)
-                    diff = start_bound - start_of_event_day
-                    if diff % interval < day_len and diff >= 0:
-                        occurs_today = True
-
-            if occurs_today:
-                title = ev.title
-                if getattr(ev, 'is_recurring', False) and ev.start_tick < start_bound:
-                    title += " (Recurring)"
-
-                list_item = QListWidgetItem(title)
+                list_item = QListWidgetItem(ev.title)
                 list_item.setData(Qt.ItemDataRole.UserRole, ev.id)
+                # Parse color if present
                 from PyQt6.QtGui import QColor, QBrush
                 if getattr(ev, "color", None):
+                    # Set a subtle left border/background color indicator
+                    # PyQt6 item background:
                     list_item.setForeground(QBrush(QColor(ev.color)))
                 self.event_list.addItem(list_item)
 
@@ -646,7 +579,8 @@ class ViewerWidget(QWidget):
 
                 ev.start_tick = new_day_tick + old_tod
                 ev.end_tick = ev.start_tick + duration
-
+                ev.is_recurring = self.chk_recurring.isChecked()
+                ev.recurrence_interval_days = self.spin_recur_interval.value()
                 self.main_window.mark_unsaved()
                 self.refresh_view()
                 break
@@ -731,10 +665,6 @@ class ViewerWidget(QWidget):
         self.current_event.category = self.ev_category.currentText()
         self.current_event.color = self.ev_color.currentText()
         self.current_event.notes = self.ev_notes.toPlainText()
-
-        self.current_event.is_recurring = self.chk_recurring.isChecked()
-        self.current_event.recurrence_interval_days = self.spin_recur_interval.value()
-
         self.main_window.mark_unsaved()
 
         p_planet = self.engine.get_primary_planet()

@@ -77,14 +77,23 @@ class EditorWidget(QWidget):
         self.update_earth_sync_state()
 
         self.populate_time_units()
+        self.main_window.mark_unsaved()
         self.populate_planets()
+        self.main_window.mark_unsaved()
         self.populate_months()
+        self.main_window.mark_unsaved()
         self.populate_weekdays()
+        self.main_window.mark_unsaved()
         self.populate_eras()
+        self.main_window.mark_unsaved()
         self.populate_holidays()
+        self.main_window.mark_unsaved()
         self.populate_leap_rules()
+        self.main_window.mark_unsaved()
         self.populate_suns()
+        self.main_window.mark_unsaved()
         self.populate_moons()
+        self.main_window.mark_unsaved()
 
 
     def export_timeline(self):
@@ -170,7 +179,7 @@ class EditorWidget(QWidget):
                         continue
                     if not end_dt: end_dt = start_dt + datetime.timedelta(hours=1)
 
-                    dtstamp = datetime.datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+                    dtstamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
                     dtstart = start_dt.strftime("%Y%m%dT%H%M%SZ")
                     dtend = end_dt.strftime("%Y%m%dT%H%M%SZ")
 
@@ -325,12 +334,14 @@ class EditorWidget(QWidget):
     def add_time_unit(self):
         self.main_window.world.time_units.append(TimeUnit(name="New Unit", abbreviation="NU", ticks=1))
         self.populate_time_units()
+        self.main_window.mark_unsaved()
 
     def remove_time_unit(self):
         row = self.units_table.currentRow()
         if row >= 0:
             self.main_window.world.time_units.pop(row)
             self.populate_time_units()
+        self.main_window.mark_unsaved()
 
     def update_time_units(self):
         for r in range(self.units_table.rowCount()):
@@ -341,9 +352,6 @@ class EditorWidget(QWidget):
                 u.ticks = int(self.units_table.item(r, 2).text())
             except ValueError:
                 QMessageBox.warning(self, 'Invalid Input', 'Please enter a valid number.')
-                self.units_table.blockSignals(True)
-                self.units_table.item(r, 2).setText(str(self.main_window.world.time_units[r].ticks))
-                self.units_table.blockSignals(False)
                 return
 
     def update_earth_sync_state(self):
@@ -396,12 +404,14 @@ class EditorWidget(QWidget):
     def add_planet(self):
         self.main_window.world.planets.append(Planet(name="New Planet"))
         self.populate_planets()
+        self.main_window.mark_unsaved()
 
     def remove_planet(self):
         row = self.planets_table.currentRow()
         if row >= 0:
             self.main_window.world.planets.pop(row)
             self.populate_planets()
+        self.main_window.mark_unsaved()
 
     def update_planets(self, item):
         r = item.row()
@@ -414,9 +424,6 @@ class EditorWidget(QWidget):
             p.year_length_days = int(self.planets_table.item(r, 2).text())
         except ValueError:
                 QMessageBox.warning(self, 'Invalid Input', 'Please enter a valid number.')
-                self.planets_table.blockSignals(True)
-                self.planets_table.item(r, 1).setText(str(self.main_window.world.planets[r].day_length_ticks))
-                self.planets_table.blockSignals(False)
                 return
 
         # Handle exclusive primary selection
@@ -428,7 +435,7 @@ class EditorWidget(QWidget):
                 self.populate_planets()
             else:
                 p.is_primary = False
-            self.main_window.mark_unsaved()
+        self.main_window.mark_unsaved()
 
     # --- Calendar (Eras, Months, Weekdays) ---
     def setup_calendar_tab(self):
@@ -502,9 +509,6 @@ class EditorWidget(QWidget):
             e.start_year = int(self.era_table.item(r, 2).text())
         except ValueError:
                 QMessageBox.warning(self, 'Invalid Input', 'Please enter a valid number.')
-                self.era_table.blockSignals(True)
-                self.era_table.item(r, 2).setText(str(self.main_window.world.eras[r].start_year))
-                self.era_table.blockSignals(False)
                 return
         if item.column() == 3:
             e.includes_year_zero = (item.checkState() == Qt.CheckState.Checked)
@@ -526,9 +530,6 @@ class EditorWidget(QWidget):
                 m.days = int(self.month_table.item(r, 1).text())
             except ValueError:
                 QMessageBox.warning(self, 'Invalid Input', 'Please enter a valid number.')
-                self.month_table.blockSignals(True)
-                self.month_table.item(r, 1).setText(str(self.main_window.world.months[r].days))
-                self.month_table.blockSignals(False)
                 return
             m.color = self.month_table.item(r, 2).text()
 
@@ -637,9 +638,6 @@ class EditorWidget(QWidget):
             h.day_in_month = int(self.holiday_table.item(r, 2).text())
         except ValueError:
                 QMessageBox.warning(self, 'Invalid Input', 'Please enter a valid number.')
-                self.holiday_table.blockSignals(True)
-                self.holiday_table.item(r, 2).setText(str(self.main_window.world.holidays[r].day_in_month))
-                self.holiday_table.blockSignals(False)
                 return
 
         if item.column() == 3:
@@ -667,9 +665,6 @@ class EditorWidget(QWidget):
                 l.force_include_interval = int(self.leap_table.item(r, 4).text() or "0")
             except ValueError:
                 QMessageBox.warning(self, 'Invalid Input', 'Please enter a valid number.')
-                self.leap_table.blockSignals(True)
-                self.leap_table.item(r, 0).setText(str(self.main_window.world.leap_rules[r].interval_years))
-                self.leap_table.blockSignals(False)
                 return
 
     # --- Astronomy ---
@@ -726,9 +721,6 @@ class EditorWidget(QWidget):
                 s.twilight_dusk_ticks = int(self.sun_table.item(r, 2).text())
             except ValueError:
                 QMessageBox.warning(self, 'Invalid Input', 'Please enter a valid number.')
-                self.sun_table.blockSignals(True)
-                self.sun_table.item(r, 1).setText(str(self.main_window.world.suns[r].twilight_dawn_ticks))
-                self.sun_table.blockSignals(False)
                 return
 
     def populate_moons(self):
@@ -749,7 +741,4 @@ class EditorWidget(QWidget):
                 m.phase_offset = float(self.moon_table.item(r, 2).text())
             except ValueError:
                 QMessageBox.warning(self, 'Invalid Input', 'Please enter a valid number.')
-                self.moon_table.blockSignals(True)
-                self.moon_table.item(r, 1).setText(str(self.main_window.world.moons[r].cycle_days))
-                self.moon_table.blockSignals(False)
                 return
