@@ -79,6 +79,8 @@ class Event:
     category: str = ""
     color: str = "#89b4fa"
     notes: str = ""
+    is_recurring: bool = False
+    recurrence_interval_days: int = 365
 
 @dataclass
 class World:
