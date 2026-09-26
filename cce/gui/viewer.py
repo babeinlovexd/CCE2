@@ -385,7 +385,7 @@ class ViewerWidget(QWidget):
 
                         if events_today > 0:
                             btn.setProperty("class", "calendar-day-event")
-                            btn.setText(f"{day}\n📍")
+                            btn.setText(f"{day}\n•")
                         else:
                             btn.setProperty("class", "calendar-day")
 
@@ -474,13 +474,10 @@ class ViewerWidget(QWidget):
                         moon_tooltip += f"{p_info['moon'].name}: {p_info['phase_name']} ({int(p_info['phase_percent']*100)}%)\n"
                     if moon_tooltip:
                         btn.setToolTip(moon_tooltip.strip())
-                        btn.setText(f"{day}\n🌘")
-
+                    btn_text = str(day)
                     if events_today > 0:
-                        base_text = str(day)
-                        if moon_tooltip: base_text += "\n🌘"
-                        btn.setText(f"{base_text}\n({events_today} 📌)")
-
+                        btn_text += f"\n({events_today})"
+                    btn.setText(btn_text)
                     if search_match:
                         btn.setProperty("class", "calendar-day-search")
                     elif events_today > 0:
