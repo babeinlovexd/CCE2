@@ -301,7 +301,10 @@ class ViewerWidget(QWidget):
 
         # Re-build time input widget just in case time_units changed in editor
         self.ev_layout.removeRow(self.ev_start)
-        self.ev_start.deleteLater()
+        try:
+            self.ev_start.deleteLater()
+        except RuntimeError:
+            pass
         self.ev_start = TimeInputWidget(self.main_window.world.time_units, self.main_window.world.base_tick_name)
         self.ev_layout.insertRow(1, "Start Time", self.ev_start)
 
