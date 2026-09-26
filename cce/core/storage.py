@@ -28,8 +28,10 @@ def _instantiate_dataclass(cls, data: dict) -> Any:
         # Handle lists of dataclasses
         if hasattr(ftype, '__origin__') and ftype.__origin__ is list:
             item_type = ftype.__args__[0]
-            if dataclasses.is_dataclass(item_type):
+            if isinstance(item_type, type) and dataclasses.is_dataclass(item_type):
                 kwargs[key] = [_instantiate_dataclass(item_type, item) for item in value]
+            elif isinstance(item_type, str) and item_type == 'Event': # ForwardRef check if needed
+                kwargs[key] = value
             else:
                 kwargs[key] = value
         else:

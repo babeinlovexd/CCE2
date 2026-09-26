@@ -1,0 +1,55 @@
+{
+  "id": "651c8cb7-e85f-4e8d-b011-3c5e924d5db2",
+  "name": "Test",
+  "base_tick_name": "Tick",
+  "earth_sync_enabled": false,
+  "earth_epoch_iso": "2000-01-01T00:00:00",
+  "real_seconds_per_tick": 1.0,
+  "time_units": [
+    {
+      "id": "d843e048-7f4a-4537-b091-6701b6c2975d",
+      "name": "Hour",
+      "abbreviation": "h",
+      "ticks": 3600
+    }
+  ],
+  "planets": [
+    {
+      "id": "52ca7e1b-b451-44f8-b8f2-4827f66f7e2e",
+      "name": "Primary Planet",
+      "day_length_ticks": 86400,
+      "year_length_days": 365,
+      "is_primary": true
+    }
+  ],
+  "eras": [],
+  "months": [
+    {
+      "id": "d428851d-fb46-4a14-8c11-23410233680d",
+      "name": "First Month",
+      "days": 30,
+      "color": "#181825"
+    }
+  ],
+  "weekdays": [],
+  "holidays": [],
+  "leap_rules": [],
+  "suns": [],
+  "moons": [],
+  "events": [
+    {
+      "id": "e1",
+      "title": "",
+      "start_tick": 0,
+      "end_tick": 100,
+      "characters": [
+        "Hero",
+        "Villain"
+      ],
+      "location": "",
+      "category": "",
+      "color": "#89b4fa",
+      "notes": ""
+    }
+  ]
+}

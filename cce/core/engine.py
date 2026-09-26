@@ -55,7 +55,7 @@ class TimeEngine:
                 if not is_excluded:
                     if rule.month_id_to_append == month.id or rule.month_id_to_append == month.name:
                         days += rule.days_to_add
-        return days
+        return max(1, days)
 
     def tick_to_date(self, planet: Planet, tick: int) -> Dict:
         """
