@@ -13,7 +13,7 @@ QWidget {
     background-color: #100020;
     color: #cdd6f4;
     font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-    font-size: 13px;
+    font-size: 14px;
 }
 
 /* Tooltips */
@@ -21,8 +21,8 @@ QToolTip {
     background-color: #313244;
     color: #cdd6f4;
     border: 1px solid #00c0f0;
-    border-radius: 4px;
-    padding: 4px;
+    border-radius: 8px;
+    padding: 6px;
 }
 
 /* Menus */
@@ -45,7 +45,7 @@ QMenu::item:selected {
 /* Tabs */
 QTabWidget::pane {
     border: 1px solid #45475a;
-    border-radius: 4px;
+    border-radius: 8px;
     background-color: #100020;
     margin-top: -1px;
 }
@@ -54,10 +54,10 @@ QTabBar::tab {
     color: #a6adc8;
     border: 1px solid #45475a;
     border-bottom-color: #45475a;
-    border-top-left-radius: 6px;
-    border-top-right-radius: 6px;
-    padding: 8px 16px;
-    margin-right: 2px;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    padding: 10px 18px;
+    margin-right: 4px;
 }
 QTabBar::tab:selected {
     background-color: #100020;
@@ -73,8 +73,8 @@ QTabBar::tab:hover:!selected {
 QPushButton {
     background-color: #313244;
     border: 1px solid #45475a;
-    border-radius: 5px;
-    padding: 6px 14px;
+    border-radius: 8px;
+    padding: 8px 16px;
     color: #cdd6f4;
     font-weight: bold;
 }
@@ -103,8 +103,8 @@ QPushButton#primaryAction:pressed {
 QPushButton.calendar-day {
     background-color: #313244;
     border: 1px solid #45475a;
-    border-radius: 6px;
-    font-size: 14px;
+    border-radius: 8px;
+    font-size: 15px;
 }
 QPushButton.calendar-day:hover {
     border: 2px solid #00c0f0;
@@ -123,14 +123,14 @@ QPushButton.calendar-day-search {
 }
 
 /* Inputs */
-QLineEdit, QTextEdit, QComboBox {
+QLineEdit, QTextEdit, QComboBox, QSpinBox {
     background-color: #181825;
     border: 1px solid #45475a;
-    border-radius: 4px;
-    padding: 6px;
+    border-radius: 8px;
+    padding: 8px;
     color: #cdd6f4;
 }
-QLineEdit:focus, QTextEdit:focus, QComboBox:focus {
+QLineEdit:focus, QTextEdit:focus, QComboBox:focus, QSpinBox:focus {
     border: 1px solid #00c0f0;
     background-color: #11111b;
 }
@@ -149,9 +149,9 @@ QComboBox QAbstractItemView {
 /* Group Boxes for better layout */
 QGroupBox {
     border: 1px solid #45475a;
-    border-radius: 6px;
-    margin-top: 1.5ex;
-    padding: 10px;
+    border-radius: 12px;
+    margin-top: 2ex;
+    padding: 14px;
 }
 QGroupBox::title {
     subcontrol-origin: margin;
@@ -166,7 +166,7 @@ QTableWidget {
     background-color: #181825;
     alternate-background-color: #100020;
     border: 1px solid #45475a;
-    border-radius: 4px;
+    border-radius: 8px;
     gridline-color: #45475a;
 }
 QTableWidget::item {
@@ -190,7 +190,7 @@ QHeaderView::section {
 QListWidget {
     background-color: #181825;
     border: 1px solid #45475a;
-    border-radius: 4px;
+    border-radius: 8px;
 }
 QListWidget::item {
     padding: 8px;

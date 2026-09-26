@@ -46,8 +46,8 @@ class MainWindow(QMainWindow):
         self.logo_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         if os.path.exists(icon_path):
             pixmap = QPixmap(icon_path)
-            # Scale logo to a reasonable height, e.g., 80px, keeping aspect ratio
-            scaled_pixmap = pixmap.scaledToHeight(80, Qt.TransformationMode.SmoothTransformation)
+            # Scale logo to a larger, more prominent height (140px)
+            scaled_pixmap = pixmap.scaledToHeight(140, Qt.TransformationMode.SmoothTransformation)
             self.logo_label.setPixmap(scaled_pixmap)
 
         self.layout.addWidget(self.logo_label)

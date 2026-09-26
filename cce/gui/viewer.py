@@ -367,7 +367,9 @@ class ViewerWidget(QWidget):
                 for day in range(1, days_in_month + 1):
                     exact_tick = self.engine.date_to_tick(p_planet, self.current_year, m_idx, day) if p_planet else 0
                     btn = DayButton(str(day), exact_tick, self)
-                    btn.setFixedSize(30, 30) # Smaller buttons for yearly view
+                    from PyQt6.QtWidgets import QSizePolicy
+                    btn.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+                    btn.setMinimumSize(30, 30)
                     btn.setStyleSheet(f"background-color: {month.color}; font-size: 10px;")
 
                     if p_planet:
@@ -440,7 +442,9 @@ class ViewerWidget(QWidget):
             for day in range(1, days_in_month + 1):
                 exact_tick = self.engine.date_to_tick(p_planet, self.current_year, self.current_month_index, day) if p_planet else 0
                 btn = DayButton(str(day), exact_tick, self)
-                btn.setFixedSize(60, 60)
+                from PyQt6.QtWidgets import QSizePolicy
+                btn.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+                btn.setMinimumSize(60, 60)
                 btn.setStyleSheet(f"background-color: {month.color};")
 
                 if p_planet:
