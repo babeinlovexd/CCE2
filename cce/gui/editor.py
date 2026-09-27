@@ -253,7 +253,6 @@ class EditorWidget(QWidget):
             self.units_table.setItem(r, 1, QTableWidgetItem(u.abbreviation))
             self.units_table.setItem(r, 2, QTableWidgetItem(str(u.ticks)))
 
-        self.main_window.mark_unsaved()
         self.units_table.blockSignals(False)
 
     def add_time_unit(self):
@@ -322,7 +321,6 @@ class EditorWidget(QWidget):
             chk.setFlags(Qt.ItemFlag.ItemIsUserCheckable | Qt.ItemFlag.ItemIsEnabled)
             chk.setCheckState(Qt.CheckState.Checked if p.is_primary else Qt.CheckState.Unchecked)
             self.planets_table.setItem(r, 3, chk)
-        self.main_window.mark_unsaved()
         self.planets_table.blockSignals(False)
 
     def add_planet(self):
@@ -418,7 +416,6 @@ class EditorWidget(QWidget):
             chk.setFlags(Qt.ItemFlag.ItemIsUserCheckable | Qt.ItemFlag.ItemIsEnabled)
             chk.setCheckState(Qt.CheckState.Checked if e.includes_year_zero else Qt.CheckState.Unchecked)
             self.era_table.setItem(r, 3, chk)
-        self.main_window.mark_unsaved()
         self.era_table.blockSignals(False)
 
     def update_eras(self, item):
@@ -441,7 +438,6 @@ class EditorWidget(QWidget):
             self.month_table.setItem(r, 0, QTableWidgetItem(m.name))
             self.month_table.setItem(r, 1, QTableWidgetItem(str(m.days)))
             self.month_table.setItem(r, 2, QTableWidgetItem(m.color))
-        self.main_window.mark_unsaved()
         self.month_table.blockSignals(False)
 
     def update_months(self):
@@ -460,7 +456,6 @@ class EditorWidget(QWidget):
         self.weekday_table.setRowCount(len(self.main_window.world.weekdays))
         for r, w in enumerate(self.main_window.world.weekdays):
             self.weekday_table.setItem(r, 0, QTableWidgetItem(w.name))
-        self.main_window.mark_unsaved()
         self.weekday_table.blockSignals(False)
 
     def update_weekdays(self):
@@ -526,7 +521,6 @@ class EditorWidget(QWidget):
             chk.setFlags(Qt.ItemFlag.ItemIsUserCheckable | Qt.ItemFlag.ItemIsEnabled)
             chk.setCheckState(Qt.CheckState.Checked if h.counts_as_weekday else Qt.CheckState.Unchecked)
             self.holiday_table.setItem(r, 3, chk)
-        self.main_window.mark_unsaved()
         self.holiday_table.blockSignals(False)
 
     def update_holidays(self, item):
@@ -566,7 +560,6 @@ class EditorWidget(QWidget):
             self.leap_table.setItem(r, 2, QTableWidgetItem(str(l.days_to_add)))
             self.leap_table.setItem(r, 3, QTableWidgetItem(str(l.exclude_interval)))
             self.leap_table.setItem(r, 4, QTableWidgetItem(str(l.force_include_interval)))
-        self.main_window.mark_unsaved()
         self.leap_table.blockSignals(False)
 
     def update_leap_rules(self):
@@ -625,7 +618,6 @@ class EditorWidget(QWidget):
             self.sun_table.setItem(r, 0, QTableWidgetItem(s.name))
             self.sun_table.setItem(r, 1, QTableWidgetItem(str(s.twilight_dawn_ticks)))
             self.sun_table.setItem(r, 2, QTableWidgetItem(str(s.twilight_dusk_ticks)))
-        self.main_window.mark_unsaved()
         self.sun_table.blockSignals(False)
 
     def update_suns(self):
@@ -646,7 +638,6 @@ class EditorWidget(QWidget):
             self.moon_table.setItem(r, 0, QTableWidgetItem(m.name))
             self.moon_table.setItem(r, 1, QTableWidgetItem(str(m.cycle_days)))
             self.moon_table.setItem(r, 2, QTableWidgetItem(str(m.phase_offset)))
-        self.main_window.mark_unsaved()
         self.moon_table.blockSignals(False)
 
     def update_moons(self):
