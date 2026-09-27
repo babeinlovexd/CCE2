@@ -1,6 +1,8 @@
+import os
 from PyQt6.QtWidgets import (QWidget, QGroupBox, QVBoxLayout, QHBoxLayout, QLabel,
                              QPushButton, QGridLayout, QScrollArea, QFrame,
-                             QLineEdit, QListWidget, QListWidgetItem, QFormLayout, QTextEdit, QComboBox, QSpinBox)
+                             QLineEdit, QListWidget, QListWidgetItem, QFormLayout,
+                             QTextEdit, QComboBox, QSpinBox, QCheckBox, QFileDialog, QMessageBox)
 from PyQt6.QtCore import Qt
 
 from cce.core.engine import TimeEngine
@@ -8,7 +10,7 @@ from cce.core.astronomy import AstronomyModel
 from cce.core.models import Event
 from .translations import translator
 from PyQt6.QtCore import QMimeData
-from PyQt6.QtGui import QDrag
+from PyQt6.QtGui import QDrag, QColor, QBrush, QPixmap
 
 class TimeInputWidget(QWidget):
     """A custom widget to input time using custom time units instead of raw ticks."""
@@ -223,7 +225,6 @@ class ViewerWidget(QWidget):
 
         self.ev_start = TimeInputWidget(self.main_window.world.time_units, self.main_window.world.base_tick_name)
 
-        from PyQt6.QtWidgets import QSpinBox
         self.ev_duration_days = QSpinBox()
         self.ev_duration_days.setMinimum(0)
         self.ev_duration_days.setMaximum(99999)
@@ -244,7 +245,6 @@ class ViewerWidget(QWidget):
         self.ev_cat_layout.addWidget(self.ev_color)
 
                 # Recurrence
-        from PyQt6.QtWidgets import QCheckBox, QSpinBox
         self.ev_rec_layout = QHBoxLayout()
         self.chk_recurring = QCheckBox("Repeat every")
         self.spin_recur_interval = QSpinBox()
@@ -355,7 +355,6 @@ class ViewerWidget(QWidget):
             # Yearly view layout
             cols = 3
             for m_idx, month in enumerate(world.months):
-                from PyQt6.QtWidgets import QGridLayout
                 month_group = QGroupBox(month.name)
                 m_layout = QGridLayout(month_group)
                 m_layout.setContentsMargins(5, 5, 5, 5)
@@ -561,7 +560,6 @@ class ViewerWidget(QWidget):
                 list_item = QListWidgetItem(ev.title)
                 list_item.setData(Qt.ItemDataRole.UserRole, ev.id)
                 # Parse color if present
-                from PyQt6.QtGui import QColor, QBrush
                 if getattr(ev, "color", None):
                     # Set a subtle left border/background color indicator
                     # PyQt6 item background:
@@ -682,9 +680,6 @@ class ViewerWidget(QWidget):
             self.render_calendar()
 
     def export_calendar_image(self):
-        from PyQt6.QtWidgets import QFileDialog, QMessageBox
-        from PyQt6.QtGui import QPixmap
-        import os
 
         file_path, _ = QFileDialog.getSaveFileName(self, "Export Calendar as Image", "", "PNG Images (*.png)")
         if file_path:

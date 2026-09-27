@@ -1,6 +1,6 @@
 import os
 import sys
-from PyQt6.QtWidgets import QApplication, QMainWindow, QStackedWidget, QWidget, QVBoxLayout, QPushButton, QHBoxLayout, QMenuBar, QLabel
+from PyQt6.QtWidgets import QApplication, QMainWindow, QStackedWidget, QWidget, QVBoxLayout, QPushButton, QHBoxLayout, QMenuBar, QLabel, QMessageBox
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon, QPixmap
 
@@ -86,7 +86,6 @@ class MainWindow(QMainWindow):
         if not self.is_unsaved:
             return True
 
-        from PyQt6.QtWidgets import QMessageBox
         reply = QMessageBox.question(self, translator.t("warn_unsaved_title"),
                                      translator.t("warn_unsaved_msg"),
                                      QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
