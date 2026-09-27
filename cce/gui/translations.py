@@ -127,6 +127,13 @@ LANGUAGES = {
         "btn_jump_today": "Jump Today",
         "ev_recurring": "Recurring Event",
         "ev_interval": "Interval (Days):",
+        "ev_start_time": "Start Time",
+        "ev_duration": "Duration (Days)",
+        "ev_recurrence": "Recurrence",
+        "ev_category": "Category/Color",
+        "ev_editor_title": "Event Editor",
+        "ev_repeat_every": "Repeat every:",
+        "ev_days": "days",
     },
 
     "de": {
@@ -256,6 +263,13 @@ LANGUAGES = {
         "ev_recurring": "Wiederkehrendes Event",
         "ev_interval": "Intervall (Tage):",
         "btn_export_img": "Bild exportieren",
+        "ev_start_time": "Startzeit",
+        "ev_duration": "Dauer (Tage)",
+        "ev_recurrence": "Wiederholung",
+        "ev_category": "Kategorie/Farbe",
+        "ev_editor_title": "Ereignis bearbeiten",
+        "ev_repeat_every": "Wiederholen alle:",
+        "ev_days": "Tage",
     }
 }
 

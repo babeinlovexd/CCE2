@@ -98,7 +98,9 @@ class TimeEngine:
 
                 if not self.world.leap_rules and days_remaining < -days_this_year * 10:
                     skip_years = (-days_remaining) // days_this_year
-                    year -= skip_years
+                    # Subtract skip_years, but we already did year -= 1 at the start of the loop iteration,
+                    # so we actually need to subtract (skip_years - 1) to avoid an off-by-one.
+                    year -= (skip_years - 1)
                     days_remaining += skip_years * days_this_year
                     continue
 

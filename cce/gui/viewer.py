@@ -215,7 +215,7 @@ class ViewerWidget(QWidget):
         details_layout.addWidget(group_list, 1) # Give it stretch
 
         # Event Editor Group
-        self.event_editor = QGroupBox("Event Editor")
+        self.event_editor = QGroupBox(translator.t("ev_editor_title"))
         self.ev_layout = QFormLayout(self.event_editor)
         self.ev_layout.setSpacing(10)
         self.ev_title = QLineEdit()
@@ -248,18 +248,18 @@ class ViewerWidget(QWidget):
         self.spin_recur_interval.setMinimum(1)
         self.spin_recur_interval.setMaximum(99999)
         self.spin_recur_interval.setValue(365)
-        self.spin_recur_interval.setSuffix(" days")
+        self.spin_recur_interval.setSuffix(" " + translator.t("ev_days"))
         self.ev_rec_layout.addWidget(self.chk_recurring)
         self.ev_rec_layout.addWidget(self.spin_recur_interval)
 
         self.ev_notes = QTextEdit()
-        self.ev_notes.setMaximumHeight(80)
+        self.ev_notes.setMinimumHeight(60)
 
         self.ev_layout.addRow(translator.t("ev_title"), self.ev_title)
-        self.ev_layout.addRow("Start Time", self.ev_start)
-        self.ev_layout.addRow("Duration (Days)", self.ev_duration_days)
-        self.ev_layout.addRow("Recurrence", self.ev_rec_layout)
-        self.ev_layout.addRow("Category/Color", self.ev_cat_layout)
+        self.ev_layout.addRow(translator.t("ev_start_time"), self.ev_start)
+        self.ev_layout.addRow(translator.t("ev_duration"), self.ev_duration_days)
+        self.ev_layout.addRow(translator.t("ev_recurrence"), self.ev_rec_layout)
+        self.ev_layout.addRow(translator.t("ev_category"), self.ev_cat_layout)
         self.ev_layout.addRow(translator.t("ev_chars"), self.ev_chars)
         self.ev_layout.addRow(translator.t("ev_loc"), self.ev_loc)
         self.ev_layout.addRow(translator.t("ev_notes"), self.ev_notes)
@@ -281,7 +281,7 @@ class ViewerWidget(QWidget):
         btn_ev_layout.addWidget(btn_ev_save)
         self.ev_layout.addRow(btn_ev_layout)
 
-        details_layout.addWidget(self.event_editor)
+        details_layout.addWidget(self.event_editor, 2)
 
         right_panel = QWidget()
         right_panel.setLayout(details_layout)
@@ -303,7 +303,7 @@ class ViewerWidget(QWidget):
         except RuntimeError:
             pass
         self.ev_start = TimeInputWidget(self.main_window.world.time_units, self.main_window.world.base_tick_name)
-        self.ev_layout.insertRow(1, "Start Time", self.ev_start)
+        self.ev_layout.insertRow(1, translator.t("ev_start_time"), self.ev_start)
 
         # Update sync combo
         self.planet_sync_combo.clear()
