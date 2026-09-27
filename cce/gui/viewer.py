@@ -118,13 +118,13 @@ class ViewerWidget(QWidget):
         self.btn_back = QPushButton(translator.t("btn_back"))
         self.btn_back.clicked.connect(self.main_window.switch_to_editor)
 
-        self.btn_prev_year = QPushButton("<< Year")
-        self.btn_prev_month = QPushButton("< Month")
+        self.btn_prev_year = QPushButton(translator.t("btn_prev_year"))
+        self.btn_prev_month = QPushButton(translator.t("btn_prev_month"))
         self.lbl_current_view = QLabel("Year 0, Month 1")
         self.lbl_current_view.setStyleSheet("font-size: 18px; font-weight: bold;")
         self.lbl_current_view.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.btn_next_month = QPushButton("Month >")
-        self.btn_next_year = QPushButton("Year >>")
+        self.btn_next_month = QPushButton(translator.t("btn_next_month"))
+        self.btn_next_year = QPushButton(translator.t("btn_next_year"))
 
         self.btn_prev_year.clicked.connect(lambda: self.change_year(-1))
         self.btn_prev_month.clicked.connect(lambda: self.change_month(-1))
@@ -138,7 +138,7 @@ class ViewerWidget(QWidget):
         header_layout.addWidget(self.lbl_current_view)
         header_layout.addWidget(self.btn_next_month)
         header_layout.addWidget(self.btn_next_year)
-        self.btn_toggle_view = QPushButton("Toggle Yearly View")
+        self.btn_toggle_view = QPushButton(translator.t("btn_toggle_view"))
         self.btn_toggle_view.setCheckable(True)
         self.btn_toggle_view.clicked.connect(self.render_calendar)
         header_layout.addWidget(self.btn_toggle_view)
@@ -163,7 +163,7 @@ class ViewerWidget(QWidget):
         search_layout.addWidget(self.planet_sync_combo)
         search_layout.addWidget(self.lbl_sync_result)
 
-        btn_export_img = QPushButton("Export Calendar Image")
+        btn_export_img = QPushButton(translator.t("btn_export_img"))
         btn_export_img.clicked.connect(self.export_calendar_image)
         search_layout.addWidget(btn_export_img)
 
@@ -193,9 +193,7 @@ class ViewerWidget(QWidget):
         details_layout.setSpacing(15)
 
         # Day Details Group
-        group_day = QGroupBox(translator.t("select_day"))
-        day_layout = QVBoxLayout(group_day)
-        self.lbl_day_title = QLabel(translator.t("select_day"))
+        self.lbl_day_title = QLabel("")
         self.lbl_day_title.setStyleSheet("font-size: 16px; font-weight: bold; color: #89b4fa;")
 
         self.lbl_earth_date = QLabel("")
@@ -204,10 +202,9 @@ class ViewerWidget(QWidget):
 
         self.lbl_astro_info = QLabel("")
         self.lbl_astro_info.setWordWrap(True)
-        day_layout.addWidget(self.lbl_day_title)
-        day_layout.addWidget(self.lbl_earth_date)
-        day_layout.addWidget(self.lbl_astro_info)
-        details_layout.addWidget(group_day)
+        details_layout.addWidget(self.lbl_day_title)
+        details_layout.addWidget(self.lbl_earth_date)
+        details_layout.addWidget(self.lbl_astro_info)
 
         # Events List Group
         group_list = QGroupBox(translator.t("lbl_events"))

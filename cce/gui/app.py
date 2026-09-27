@@ -159,5 +159,19 @@ def run_app():
         app.setWindowIcon(QIcon(icon_path))
     app.setStyleSheet(MODERN_DARK_STYLE)
     window = MainWindow()
+
+    # Check if a file was passed as an argument (e.g., from double-clicking a .worldcal file)
+    if len(sys.argv) > 1:
+        file_path = sys.argv[1]
+        if os.path.exists(file_path) and file_path.endswith('.worldcal'):
+            from cce.core.storage import load_world
+            from PyQt6.QtWidgets import QMessageBox
+            try:
+                window.world = load_world(file_path)
+                window.editor_widget.refresh_view()
+                window.mark_saved()
+            except Exception as e:
+                QMessageBox.critical(window, "Error", f"Could not load file:\n{e}")
+
     window.show()
     sys.exit(app.exec())

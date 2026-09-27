@@ -40,6 +40,7 @@ LANGUAGES = {
         "lbl_earth_date": "Earth Date:",
         # New Features
         "btn_ev_delete": "Delete Event",
+        "btn_export_img": "Export Image",
         "btn_export": "Export Timeline",
         "warn_unsaved_title": "Unsaved Changes",
         "warn_unsaved_msg": "You have unsaved changes. Are you sure you want to proceed without saving?",
@@ -118,6 +119,14 @@ LANGUAGES = {
         "tt_sync": "Select a different planet to see what time it is there exactly when this day happens on the primary planet.",
         "tt_ev_start": "The exact tick when this event begins.",
         "tt_ev_chars": "Comma-separated list of characters involved.",
+        "btn_toggle_view": "Toggle Yearly View",
+        "btn_prev_year": "<< Year",
+        "btn_prev_month": "< Month",
+        "btn_next_month": "Month >",
+        "btn_next_year": "Year >>",
+        "btn_jump_today": "Jump Today",
+        "ev_recurring": "Recurring Event",
+        "ev_interval": "Interval (Days):",
     },
 
     "de": {
@@ -159,6 +168,7 @@ LANGUAGES = {
         "lbl_earth_date": "Erd-Datum:",
         # New Features
         "btn_ev_delete": "Event löschen",
+        "btn_export_img": "Bild exportieren",
         "btn_export": "Timeline exportieren",
         "warn_unsaved_title": "Ungespeicherte Änderungen",
         "warn_unsaved_msg": "Du hast ungespeicherte Änderungen. Möchtest du wirklich fortfahren, ohne zu speichern?",
@@ -237,6 +247,15 @@ LANGUAGES = {
         "tt_sync": "Wähle einen anderen Planeten aus, um zu sehen, wie spät es dort exakt ist, wenn dieser Tag auf dem Hauptplaneten anbricht.",
         "tt_ev_start": "Der absolute Tick, an dem das Event beginnt.",
         "tt_ev_chars": "Kommagetrennte Liste der involvierten Charaktere.",
+        "btn_toggle_view": "Jahresansicht umschalten",
+        "btn_prev_year": "<< Jahr",
+        "btn_prev_month": "< Monat",
+        "btn_next_month": "Monat >",
+        "btn_next_year": "Jahr >>",
+        "btn_jump_today": "Heute",
+        "ev_recurring": "Wiederkehrendes Event",
+        "ev_interval": "Intervall (Tage):",
+        "btn_export_img": "Bild exportieren",
     }
 }
 

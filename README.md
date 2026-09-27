@@ -54,3 +54,21 @@ Chronix ist darauf ausgelegt, intuitiv und visuell ansprechend zu sein. Die Anwe
 2.  **📅 Kalender-Viewer:** Mit einem Klick auf *Kalender generieren* wechseln Sie in die interaktive Ansicht. Hier durchstöbern Sie die Tage, fügen Story-Events hinzu, prüfen Mondphasen und durchsuchen Ihre Timeline.
 
 *Chronix - Bringen Sie Ordnung in die Geschichte Ihrer Welten.*
+
+---
+
+## 💿 Installer erstellen (Inno Setup)
+
+Um Chronix wie ein echtes Windows-Programm zu installieren (sodass man `.worldcal` Dateien einfach mit einem Doppelklick öffnen kann), können Sie das kostenlose Tool **Inno Setup** nutzen:
+
+1. Laden Sie [Inno Setup](https://jrsoftware.org/isinfo.php) herunter und installieren Sie es.
+2. Erstellen Sie ein neues Skript über den Wizard und wählen Sie Ihre kompilierte `Chronix.exe` aus dem `dist/` Ordner aus.
+3. Um Dateiendungen direkt zu verknüpfen, fügen Sie folgenden Code am Ende Ihres Skripts ein:
+
+```inno
+[Registry]
+Root: HKCR; Subkey: ".worldcal"; ValueType: string; ValueName: ""; ValueData: "ChronixProject"; Flags: uninsdeletevalue
+Root: HKCR; Subkey: "ChronixProject"; ValueType: string; ValueName: ""; ValueData: "Chronix World Calendar"; Flags: uninsdeletekey
+Root: HKCR; Subkey: "ChronixProject\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\Chronix.exe,0"
+Root: HKCR; Subkey: "ChronixProject\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\Chronix.exe"" ""%1"""
+```
