@@ -118,6 +118,11 @@ LANGUAGES = {
         "tt_moons": "Define moons. Cycle is days from Full Moon to Full Moon. Offset shifts the start phase.",
 
         # Viewer Strings
+        "view_grid": "📅 Grid View",
+        "view_gantt": "📊 Gantt Timeline",
+        "group_by": "Lanes:",
+        "group_category": "Category",
+        "group_location": "Location",
         "btn_back": "🔙 Editor",
         "sync_lbl": "Sync:",
         "search_ph": "Search events, characters, locations...",
@@ -269,6 +274,11 @@ LANGUAGES = {
         "tt_moons": "Definiere Monde. Der Zyklus bemisst die Tage von Vollmond zu Vollmond. Versatz verschiebt die Startphase an Tag 0.",
 
         # Viewer Strings
+        "view_grid": "📅 Raster-Ansicht",
+        "view_gantt": "📊 Gantt-Timeline",
+        "group_by": "Spuren:",
+        "group_category": "Kategorie",
+        "group_location": "Ort",
         "btn_back": "🔙 Editor",
         "sync_lbl": "Sync:",
         "search_ph": "Suche Events, Charaktere, Orte...",

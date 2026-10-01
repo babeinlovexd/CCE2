@@ -142,6 +142,18 @@ class ViewerWidget(QWidget):
         header_layout.addWidget(self.lbl_current_view)
         header_layout.addWidget(self.btn_next_month)
         header_layout.addWidget(self.btn_next_year)
+
+        self.combo_view_mode = QComboBox()
+        self.combo_view_mode.addItems([translator.t("view_grid"), translator.t("view_gantt")])
+        self.combo_view_mode.currentIndexChanged.connect(self.render_calendar)
+        header_layout.addWidget(self.combo_view_mode)
+
+        self.combo_gantt_grouping = QComboBox()
+        self.combo_gantt_grouping.addItems([translator.t("group_category"), translator.t("group_location")])
+        self.combo_gantt_grouping.currentIndexChanged.connect(self.render_calendar)
+        self.combo_gantt_grouping.setVisible(False)
+        header_layout.addWidget(self.combo_gantt_grouping)
+
         self.btn_toggle_view = QPushButton(translator.t("btn_toggle_view"))
         self.btn_toggle_view.setCheckable(True)
         self.btn_toggle_view.clicked.connect(self.render_calendar)
@@ -373,10 +385,74 @@ class ViewerWidget(QWidget):
             self.lbl_current_view.setText(translator.t("no_months"))
             return
 
+        is_gantt = (self.combo_view_mode.currentIndex() == 1) if hasattr(self, 'combo_view_mode') else False
         is_yearly = self.btn_toggle_view.isChecked() if hasattr(self, 'btn_toggle_view') else False
         p_planet = self.engine.get_primary_planet()
 
-        if is_yearly:
+        if hasattr(self, 'combo_gantt_grouping'):
+            self.combo_gantt_grouping.setVisible(is_gantt)
+
+        if is_gantt:
+            month = world.months[self.current_month_index]
+            self.lbl_current_view.setText(f"📊 Gantt: Year {self.current_year}, {month.name}")
+            days_in_month = self.engine.get_days_in_month(self.current_year, month)
+
+            group_mode = self.combo_gantt_grouping.currentIndex() if hasattr(self, 'combo_gantt_grouping') else 0
+            hdr_text = "Lanes (" + (translator.t("group_category") if group_mode == 0 else translator.t("group_location")) + ")"
+
+            # Day column headers
+            lbl_lane_hdr = QLabel(hdr_text)
+            lbl_lane_hdr.setStyleSheet("font-weight: bold; color: #00c0f0;")
+            self.calendar_grid.addWidget(lbl_lane_hdr, 0, 0)
+
+            for d in range(1, days_in_month + 1):
+                lbl_d = QLabel(str(d))
+                lbl_d.setAlignment(Qt.AlignmentFlag.AlignCenter)
+                lbl_d.setStyleSheet("font-size: 11px; font-weight: bold; color: #a6adc8;")
+                self.calendar_grid.addWidget(lbl_d, 0, d)
+
+            # Group events by category or location
+            lanes = {}
+            for ev in world.events:
+                if group_mode == 1:
+                    key = ev.location.strip() if ev.location else "Unspecified Location"
+                else:
+                    key = getattr(ev, 'category', '') or 'General'
+
+                if key not in lanes:
+                    lanes[key] = []
+                lanes[key].append(ev)
+
+            if not lanes:
+                lanes['General'] = []
+
+            row = 1
+            for lane_name, lane_events in lanes.items():
+                lbl_lane = QLabel(lane_name)
+                lbl_lane.setStyleSheet("font-weight: bold; padding: 4px; background-color: #313244; border-radius: 4px;")
+                self.calendar_grid.addWidget(lbl_lane, row, 0)
+
+                for day in range(1, days_in_month + 1):
+                    exact_tick = self.engine.date_to_tick(p_planet, self.current_year, self.current_month_index, day) if p_planet else 0
+                    day_events = [ev for ev in lane_events if self._event_occurs_on_day(ev, exact_tick, p_planet.day_length_ticks if p_planet else 86400)]
+
+                    if day_events:
+                        ev = day_events[0]
+                        btn_bar = QPushButton(ev.title[:8] + ".." if len(ev.title) > 10 else ev.title)
+                        col_str = getattr(ev, 'color', '#89b4fa') or '#89b4fa'
+                        btn_bar.setStyleSheet(f"background-color: {col_str}; color: #11111b; font-size: 10px; font-weight: bold; border-radius: 3px;")
+                        btn_bar.setToolTip(f"{ev.title}\n{ev.notes}")
+                        btn_bar.clicked.connect(lambda checked, t=exact_tick: self.select_day(t))
+                        self.calendar_grid.addWidget(btn_bar, row, day)
+                    else:
+                        placeholder = QLabel("·")
+                        placeholder.setAlignment(Qt.AlignmentFlag.AlignCenter)
+                        placeholder.setStyleSheet("color: #45475a;")
+                        self.calendar_grid.addWidget(placeholder, row, day)
+
+                row += 1
+
+        elif is_yearly:
             self.lbl_current_view.setText(f"Year {self.current_year}")
 
             # Yearly view layout
