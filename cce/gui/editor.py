@@ -149,27 +149,33 @@ class EditorWidget(QWidget):
 
 
     def export_timeline(self):
-        # Force flush editor state before export
+        from cce.core.exporter import export_to_ical, export_to_csv, export_to_json
+
         self.flush_state_to_model()
 
         if not self.main_window.world.events:
             QMessageBox.information(self, "Export", "No events to export.")
             return
 
-        fname, _ = QFileDialog.getSaveFileName(self, translator.t("btn_export"), "timeline.md", "Markdown Files (*.md);;Text Files (*.txt);;All Files (*)")
+        filters = "iCalendar Files (*.ics);;CSV Files (*.csv);;JSON Files (*.json);;Markdown Files (*.md);;Text Files (*.txt);;All Files (*)"
+        fname, selected_filter = QFileDialog.getSaveFileName(self, translator.t("btn_export"), "timeline.ics", filters)
         if not fname:
             return
 
         engine = TimeEngine(self.main_window.world)
         p_planet = engine.get_primary_planet()
 
-        # Sort events chronologically
-        sorted_events = sorted(self.main_window.world.events, key=lambda e: e.start_tick)
-
         try:
-            with open(fname, 'w', encoding='utf-8') as f:
-                f.write(f"# Timeline: {self.main_window.world.name}\n\n")
-
+            if fname.endswith(".ics") or "iCalendar" in selected_filter:
+                content = export_to_ical(self.main_window.world)
+            elif fname.endswith(".csv") or "CSV" in selected_filter:
+                content = export_to_csv(self.main_window.world)
+            elif fname.endswith(".json") or "JSON" in selected_filter:
+                content = export_to_json(self.main_window.world)
+            else:
+                # Default Markdown format
+                sorted_events = sorted(self.main_window.world.events, key=lambda e: e.start_tick)
+                md_lines = [f"# Timeline: {self.main_window.world.name}\n"]
                 for ev in sorted_events:
                     date_str = f"Tick {ev.start_tick}"
                     if p_planet:
@@ -187,12 +193,17 @@ class EditorWidget(QWidget):
                     chars = f"**Characters:** {', '.join(ev.characters)}\n" if ev.characters else ""
                     loc = f"**Location:** {ev.location}\n" if ev.location else ""
 
-                    f.write(f"## {ev.title}\n")
-                    f.write(f"**Date:** {date_str}{earth_str}\n\n")
-                    if chars: f.write(chars)
-                    if loc: f.write(loc)
-                    if ev.notes: f.write(f"\n{ev.notes}\n")
-                    f.write("\n---\n\n")
+                    md_lines.append(f"## {ev.title}")
+                    md_lines.append(f"**Date:** {date_str}{earth_str}\n")
+                    if chars: md_lines.append(chars)
+                    if loc: md_lines.append(loc)
+                    if ev.notes: md_lines.append(f"\n{ev.notes}\n")
+                    md_lines.append("\n---\n")
+
+                content = "\n".join(md_lines)
+
+            with open(fname, 'w', encoding='utf-8') as f:
+                f.write(content)
 
             QMessageBox.information(self, "Success", translator.t("export_success"))
         except Exception as e:

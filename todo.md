@@ -14,5 +14,5 @@ Die folgenden Features sollen in künftigen Versionen von **Chronix** umgesetzt 
 - [ ] **4. Auto-Updater Integration**
    * Leichtgewichtige Auto-Update-Funktion (z. B. via GitHub Releases API / PyUpdater), damit Nutzer Aktualisierungen nahtlos direkt in der Anwendung installieren können.
 
-- [ ] **5. Erweiterte Import/Export-Formate**
-   * Export nach **iCal (`.ics`)** zur Synchronisation mit realen Kalender-Apps sowie erweiterte Exportmöglichkeiten für **JSON, CSV** und **druckfähige PDF-Jahreskalender**.
+- [x] ~~**5. Erweiterte Import/Export-Formate**~~ (✅ **Umgesetzt in v1.1**)
+   * Export nach **iCal (`.ics`)** zur Synchronisation mit realen Kalender-Apps sowie erweiterte Exportmöglichkeiten für **JSON, CSV**, Markdown und Textdateien.
