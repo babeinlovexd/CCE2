@@ -87,3 +87,34 @@ def test_engine_date_to_tick():
     # Year 1, Month 0, Day 1 -> Tick 3000
     t = engine.date_to_tick(planet, 1, 0, 1)
     assert t == 3000
+
+def test_engine_format_time():
+    from cce.core.models import TimeUnit
+    world = World()
+    world.time_units = [
+        TimeUnit(name="Hour", abbreviation="h", ticks=3600),
+        TimeUnit(name="Minute", abbreviation="m", ticks=60)
+    ]
+    engine = TimeEngine(world)
+
+    s = engine.format_time(3665)
+    assert "1 h" in s
+    assert "1 m" in s
+    assert "5 Tick" in s
+
+def test_intercalary_holiday():
+    world = World()
+    world.months = [Month(id="m1", name="Month1", days=10)]
+    world.holidays = [Holiday(id="h1", name="New Year Day", month_id=None)]
+    planet = Planet(id="p1", day_length_ticks=10, is_primary=True)
+    world.planets = [planet]
+
+    engine = TimeEngine(world)
+
+    days = engine.get_days_in_year(planet, 0)
+    assert days == 11 # 10 days in month + 1 intercalary holiday
+
+    # Day 10 (0-indexed) should be the intercalary holiday
+    date_info = engine.tick_to_date(planet, 10 * 10)
+    assert date_info["is_holiday"] is True
+    assert date_info["holiday"].name == "New Year Day"

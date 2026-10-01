@@ -72,7 +72,20 @@ class TimeEngine:
         days_remaining = total_days
 
         # We assume year 0 starts at day 0.
-        # Calculate year by iterating (could be optimized, but ok for now)
+        # Calculate year efficiently
+        base_days = sum(m.days for m in self.world.months)
+        for h in self.world.holidays:
+            is_intercalary = not h.month_id
+            if h.month_id:
+                month_exists = any(m.id == h.month_id or m.name == h.month_id for m in self.world.months)
+                if not month_exists:
+                    is_intercalary = True
+            if is_intercalary:
+                base_days += 1
+
+        if base_days <= 0:
+            base_days = planet.year_length_days or 365
+
         if days_remaining >= 0:
             while True:
                 days_this_year = self.get_days_in_year(planet, year)
@@ -80,12 +93,23 @@ class TimeEngine:
                     days_this_year = 1
                 if days_remaining < days_this_year:
                     break
-                # Only use fast-forwarding if there are NO leap rules, otherwise iterate exactly
-                if not self.world.leap_rules and days_remaining > days_this_year * 10:
-                    skip_years = days_remaining // days_this_year
-                    year += skip_years
-                    days_remaining -= skip_years * days_this_year
-                    continue
+
+                if days_remaining > days_this_year * 100:
+                    # Estimate year jump conservatively based on max possible days per year
+                    skip_years = days_remaining // (base_days + 10)
+                    if skip_years > 1:
+                        # Advance year and recalculate total days skipped
+                        # For very large leaps, fast-forward accurately
+                        if not self.world.leap_rules:
+                            year += skip_years
+                            days_remaining -= skip_years * base_days
+                            continue
+                        else:
+                            # Jump in chunks of skip_years
+                            for y in range(year, year + skip_years):
+                                days_remaining -= self.get_days_in_year(planet, y)
+                            year += skip_years
+                            continue
 
                 days_remaining -= days_this_year
                 year += 1
@@ -96,13 +120,16 @@ class TimeEngine:
                 if days_this_year <= 0:
                     days_this_year = 1
 
-                if not self.world.leap_rules and days_remaining < -days_this_year * 10:
-                    skip_years = (-days_remaining) // days_this_year
-                    # Subtract skip_years, but we already did year -= 1 at the start of the loop iteration,
-                    # so we actually need to subtract (skip_years - 1) to avoid an off-by-one.
-                    year -= (skip_years - 1)
-                    days_remaining += skip_years * days_this_year
-                    continue
+                if days_remaining < -days_this_year * 100:
+                    skip_years = (-days_remaining) // (base_days + 10)
+                    if skip_years > 1:
+                        year -= (skip_years - 1)
+                        if not self.world.leap_rules:
+                            days_remaining += skip_years * base_days
+                        else:
+                            for y in range(year, year + skip_years):
+                                days_remaining += self.get_days_in_year(planet, y)
+                        continue
 
                 days_remaining += days_this_year
 

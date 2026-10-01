@@ -292,6 +292,32 @@ class ViewerWidget(QWidget):
 
         self.current_event = None
 
+    def _event_occurs_on_day(self, ev: Event, day_start_tick: int, day_length_ticks: int) -> bool:
+        if day_length_ticks <= 0:
+            return False
+
+        day_end_tick = day_start_tick + day_length_ticks
+        ev_start = ev.start_tick
+        ev_end = max(ev.start_tick, getattr(ev, 'end_tick', ev.start_tick))
+
+        if ev_end == ev_start:
+            if day_start_tick <= ev_start < day_end_tick:
+                return True
+        else:
+            if ev_start < day_end_tick and ev_end > day_start_tick:
+                return True
+
+        if getattr(ev, 'is_recurring', False) and ev_start < day_end_tick:
+            interval_days = getattr(ev, 'recurrence_interval_days', 365)
+            if interval_days > 0:
+                interval_ticks = interval_days * day_length_ticks
+                start_of_event_day = ev_start - (ev_start % day_length_ticks)
+                diff = day_start_tick - start_of_event_day
+                if diff >= 0 and (diff % interval_ticks) < day_length_ticks:
+                    return True
+
+        return False
+
     def refresh_view(self):
         self.engine = TimeEngine(self.main_window.world)
         self.astro = AstronomyModel(self.main_window.world)
@@ -367,19 +393,8 @@ class ViewerWidget(QWidget):
 
                     if p_planet:
                         events_today = 0
-                        day_end_tick = exact_tick + p_planet.day_length_ticks
                         for ev in world.events:
-                            occurs_today = False
-                            if ev.start_tick >= exact_tick and ev.start_tick < day_end_tick:
-                                occurs_today = True
-                            elif getattr(ev, 'is_recurring', False) and ev.start_tick < day_end_tick:
-                                interval = getattr(ev, 'recurrence_interval_days', 365) * p_planet.day_length_ticks
-                                if interval > 0:
-                                    start_of_event_day = ev.start_tick - (ev.start_tick % p_planet.day_length_ticks)
-                                    diff = exact_tick - start_of_event_day
-                                    if diff % interval < p_planet.day_length_ticks and diff >= 0:
-                                        occurs_today = True
-                            if occurs_today:
+                            if self._event_occurs_on_day(ev, exact_tick, p_planet.day_length_ticks):
                                 events_today += 1
 
                         if events_today > 0:
@@ -447,18 +462,7 @@ class ViewerWidget(QWidget):
                     query = self.search_input.text().lower().strip()
 
                     for ev in world.events:
-                        occurs_today = False
-                        if ev.start_tick >= exact_tick and ev.start_tick < day_end_tick:
-                            occurs_today = True
-                        elif getattr(ev, 'is_recurring', False) and ev.start_tick < day_end_tick:
-                            interval = getattr(ev, 'recurrence_interval_days', 365) * p_planet.day_length_ticks
-                            if interval > 0:
-                                start_of_event_day = ev.start_tick - (ev.start_tick % p_planet.day_length_ticks)
-                                diff = exact_tick - start_of_event_day
-                                if diff % interval < p_planet.day_length_ticks and diff >= 0:
-                                    occurs_today = True
-
-                        if occurs_today:
+                        if self._event_occurs_on_day(ev, exact_tick, p_planet.day_length_ticks):
                             events_today += 1
                             if query:
                                 if query in ev.title.lower() or query in ev.location.lower() or query in ev.notes.lower():
@@ -549,17 +553,13 @@ class ViewerWidget(QWidget):
 
     def load_events_for_day(self, tick, day_length):
         self.event_list.clear()
-        start_bound = tick - (tick % day_length)
-        end_bound = start_bound + day_length
+        start_bound = tick - (tick % day_length) if day_length > 0 else tick
 
         for ev in self.main_window.world.events:
-            if ev.start_tick >= start_bound and ev.start_tick < end_bound:
+            if self._event_occurs_on_day(ev, start_bound, day_length):
                 list_item = QListWidgetItem(ev.title)
                 list_item.setData(Qt.ItemDataRole.UserRole, ev.id)
-                # Parse color if present
                 if getattr(ev, "color", None):
-                    # Set a subtle left border/background color indicator
-                    # PyQt6 item background:
                     list_item.setForeground(QBrush(QColor(ev.color)))
                 self.event_list.addItem(list_item)
 
