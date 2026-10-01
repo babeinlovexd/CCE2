@@ -8,8 +8,8 @@ Die folgenden Features sollen in künftigen Versionen von **Chronix** umgesetzt 
 - [ ] **2. Interactive Map / Location Integration**
    * Verknüpfung von Ereignis-Ortseingaben mit hochgeladenen Bild-Karten (Worldmaps). Bei Auswahl eines Tages oder Events leuchtet der entsprechende Handlungsort auf der Karte auf.
 
-- [ ] **3. Mondphasen-Grafiken**
-   * Dynamische grafische Renderings (Vektorgrafiken / Moon Phase Icons: 🌑 🌒 🌓 🌔 🌕) direkt in den Kalenderzellen und Tagesdetails anstelle reiner Prozent- und Textangaben.
+- [x] ~~**3. Mondphasen-Grafiken**~~ (✅ **Umgesetzt in v1.1**)
+   * Dynamische grafische Renderings (Moon Phase Icons: 🌑 🌒 🌓 🌔 🌕 🌖 🌗 🌘) direkt in den Kalenderzellen und Tagesdetails anstelle reiner Prozent- und Textangaben.
 
 - [ ] **4. Auto-Updater Integration**
    * Leichtgewichtige Auto-Update-Funktion (z. B. via GitHub Releases API / PyUpdater), damit Nutzer Aktualisierungen nahtlos direkt in der Anwendung installieren können.

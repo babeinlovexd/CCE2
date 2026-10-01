@@ -1,5 +1,5 @@
 from cce.core.models import World, Moon, Sun, Planet
-from cce.core.astronomy import AstronomyModel
+from cce.core.astronomy import AstronomyModel, get_moon_phase_icon
 
 def test_astronomy_moon_phase():
     world = World()
@@ -11,14 +11,24 @@ def test_astronomy_moon_phase():
     # Day 0: New Moon
     phase0 = astro.get_moon_phase(moon, 0)
     assert phase0["phase_name"] == "New Moon"
+    assert phase0["phase_icon"] == "🌑"
     assert phase0["illumination"] < 0.05
 
     # Day 14 (half cycle): Full Moon
     phase14 = astro.get_moon_phase(moon, 14)
     assert phase14["phase_name"] == "Full Moon"
+    assert phase14["phase_icon"] == "🌕"
     assert phase14["illumination"] > 0.95
 
+def test_moon_phase_icons():
+    assert get_moon_phase_icon("New Moon") == "🌑"
+    assert get_moon_phase_icon("Full Moon") == "🌕"
+    assert get_moon_phase_icon("First Quarter") == "🌓"
+    assert get_moon_phase_icon("Unknown") == "🌙"
+
     # Zero cycle moon edge case
+    world = World()
+    astro = AstronomyModel(world)
     dead_moon = Moon(name="Dead", cycle_days=0.0)
     dead_phase = astro.get_moon_phase(dead_moon, 10)
     assert dead_phase["phase_name"] == "Unknown"

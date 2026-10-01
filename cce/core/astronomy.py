@@ -1,6 +1,20 @@
 import math
 from .models import World, Planet, Moon, Sun
 
+MOON_PHASE_ICONS = {
+    "New Moon": "🌑",
+    "Waxing Crescent": "🌒",
+    "First Quarter": "🌓",
+    "Waxing Gibbous": "🌔",
+    "Full Moon": "🌕",
+    "Waning Gibbous": "🌖",
+    "Last Quarter": "🌗",
+    "Waning Crescent": "🌘",
+}
+
+def get_moon_phase_icon(phase_name: str) -> str:
+    return MOON_PHASE_ICONS.get(phase_name, "🌙")
+
 class AstronomyModel:
     def __init__(self, world: World):
         self.world = world
@@ -43,6 +57,7 @@ class AstronomyModel:
 
         return {
             "phase_name": phase,
+            "phase_icon": get_moon_phase_icon(phase),
             "illumination": illumination,
             "age": current_cycle_day
         }
@@ -68,6 +83,7 @@ class AstronomyModel:
             result[m.id] = {
                 "moon": m,
                 "phase_name": p_data["phase_name"],
+                "phase_icon": p_data.get("phase_icon", "🌙"),
                 "phase_percent": p_data["illumination"]
             }
         return result

@@ -552,12 +552,17 @@ class ViewerWidget(QWidget):
                                         search_match = True
 
                     moons_info = self.astro.get_moon_phases_for_tick(exact_tick)
+                    moon_icons_str = ""
                     moon_tooltip = ""
                     for m_id, p_info in moons_info.items():
-                        moon_tooltip += f"{p_info['moon'].name}: {p_info['phase_name']} ({int(p_info['phase_percent']*100)}%)\n"
+                        icon = p_info.get("phase_icon", "🌙")
+                        moon_icons_str += f" {icon}"
+                        moon_tooltip += f"{p_info['moon'].name}: {icon} {p_info['phase_name']} ({int(p_info['phase_percent']*100)}%)\n"
+
                     if moon_tooltip:
                         btn.setToolTip(moon_tooltip.strip())
-                    btn_text = str(day)
+
+                    btn_text = f"{day}{moon_icons_str}"
                     if events_today > 0:
                         btn_text += f"\n({events_today})"
                     btn.setText(btn_text)
@@ -661,7 +666,8 @@ class ViewerWidget(QWidget):
         astro_text = []
         for moon in self.main_window.world.moons:
             mp = self.astro.get_moon_phase(moon, date_info['total_days'])
-            astro_text.append(f"{moon.name}: {mp['phase_name']} ({int(mp['illumination']*100)}%)")
+            icon = mp.get('phase_icon', '🌙')
+            astro_text.append(f"{moon.name}: {icon} {mp['phase_name']} ({int(mp['illumination']*100)}%)")
         self.lbl_astro_info.setText(" | ".join(astro_text))
 
         self.update_sync_display()
