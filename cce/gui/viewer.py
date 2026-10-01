@@ -70,6 +70,10 @@ class DayButton(QPushButton):
         self.parent_viewer = parent_viewer
         self.setAcceptDrops(True)
 
+    def mouseDoubleClickEvent(self, event):
+        super().mouseDoubleClickEvent(event)
+        self.parent_viewer.quick_add_event_dialog(self.day_tick)
+
     def dragEnterEvent(self, event):
         if event.mimeData().hasFormat('text/plain'):
             event.accept()
@@ -506,6 +510,54 @@ class ViewerWidget(QWidget):
         self.current_month_index = month_idx
         self.render_calendar()
         self.select_day(tick)
+
+    def quick_add_event_dialog(self, tick: int):
+        from PyQt6.QtWidgets import QDialog, QDialogButtonBox, QFormLayout, QLineEdit, QTextEdit
+
+        self.select_day(tick)
+
+        p_planet = self.engine.get_primary_planet()
+        date_info = self.engine.tick_to_date(p_planet, tick) if p_planet else {}
+        m_name = date_info.get('month').name if date_info.get('month') else ""
+
+        dialog = QDialog(self)
+        dialog.setWindowTitle(f"⚡ Schnell-Ereignis: Tag {date_info.get('day_of_month', 1)} ({m_name})")
+        dialog.resize(400, 250)
+
+        layout = QFormLayout(dialog)
+        title_in = QLineEdit()
+        loc_in = QLineEdit()
+        chars_in = QLineEdit()
+        notes_in = QTextEdit()
+        notes_in.setMaximumHeight(80)
+
+        layout.addRow(translator.t("ev_title"), title_in)
+        layout.addRow(translator.t("ev_loc"), loc_in)
+        layout.addRow(translator.t("ev_chars"), chars_in)
+        layout.addRow(translator.t("ev_notes"), notes_in)
+
+        btn_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        layout.addRow(btn_box)
+
+        btn_box.accepted.connect(dialog.accept)
+        btn_box.rejected.connect(dialog.reject)
+
+        title_in.setFocus()
+
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            if title_in.text().strip():
+                ev = Event(
+                    title=title_in.text().strip(),
+                    start_tick=tick,
+                    end_tick=tick,
+                    location=loc_in.text().strip(),
+                    characters=[c.strip() for c in chars_in.text().split(",") if c.strip()],
+                    notes=notes_in.toPlainText().strip()
+                )
+                self.main_window.world.events.append(ev)
+                self.main_window.mark_unsaved()
+                self.load_events_for_day(tick, p_planet.day_length_ticks if p_planet else 86400)
+                self.render_calendar()
 
     def select_day(self, tick):
         self.selected_tick = tick

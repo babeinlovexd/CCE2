@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import (QWidget, QGroupBox, QVBoxLayout, QHBoxLayout, QLabel,
                              QPushButton, QTabWidget, QLineEdit, QFormLayout,
                              QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox,
-                             QFileDialog, QMessageBox, QComboBox)
+                             QFileDialog, QMessageBox, QComboBox, QSpinBox, QScrollArea, QGridLayout)
 from PyQt6.QtCore import Qt
 
 from cce.core.models import TimeUnit, Planet, Era, Month, Weekday, Holiday, LeapRule, Sun, Moon
@@ -19,17 +19,23 @@ class EditorWidget(QWidget):
         top_bar = QHBoxLayout()
         self.btn_save = QPushButton(translator.t("btn_save"))
         self.btn_open = QPushButton(translator.t("btn_open"))
+        self.btn_presets = QPushButton(translator.t("btn_presets"))
+        self.btn_sample = QPushButton(translator.t("btn_sample"))
         self.btn_export = QPushButton(translator.t("btn_export"))
         self.btn_generate = QPushButton(translator.t("btn_generate"))
         self.btn_generate.setObjectName("primaryAction")
 
         self.btn_save.clicked.connect(self.save_project)
         self.btn_open.clicked.connect(self.open_project)
+        self.btn_presets.clicked.connect(self.open_preset_wizard)
+        self.btn_sample.clicked.connect(self.load_sample_world)
         self.btn_export.clicked.connect(self.export_timeline)
         self.btn_generate.clicked.connect(self.main_window.switch_to_viewer)
 
         top_bar.addWidget(self.btn_open)
         top_bar.addWidget(self.btn_save)
+        top_bar.addWidget(self.btn_presets)
+        top_bar.addWidget(self.btn_sample)
         top_bar.addWidget(self.btn_export)
         top_bar.addStretch()
         self.btn_generate.setMinimumHeight(35)
@@ -37,7 +43,9 @@ class EditorWidget(QWidget):
 
         self.layout.addLayout(top_bar)
 
-        # Tabs
+        # Split Layout: Tabs on Left, Live Preview on Right
+        main_split = QHBoxLayout()
+
         self.tabs = QTabWidget()
 
         self.tab_world = QWidget()
@@ -52,7 +60,26 @@ class EditorWidget(QWidget):
         self.tabs.addTab(self.tab_holidays, translator.t("tab_holidays"))
         self.tabs.addTab(self.tab_astronomy, translator.t("tab_astronomy"))
 
-        self.layout.addWidget(self.tabs)
+        main_split.addWidget(self.tabs, 3)
+
+        # Live Preview Panel
+        preview_group = QGroupBox(translator.t("live_preview_title"))
+        preview_layout = QVBoxLayout(preview_group)
+
+        self.lbl_preview_info = QLabel("")
+        self.lbl_preview_info.setStyleSheet("font-weight: bold; color: #00c0f0;")
+        preview_layout.addWidget(self.lbl_preview_info)
+
+        self.preview_scroll = QScrollArea()
+        self.preview_scroll.setWidgetResizable(True)
+        self.preview_widget = QWidget()
+        self.preview_grid = QGridLayout(self.preview_widget)
+        self.preview_scroll.setWidget(self.preview_widget)
+        preview_layout.addWidget(self.preview_scroll)
+
+        main_split.addWidget(preview_group, 2)
+
+        self.layout.addLayout(main_split)
 
         self.setup_world_tab()
         self.setup_planets_tab()
@@ -82,6 +109,43 @@ class EditorWidget(QWidget):
         self.populate_leap_rules()
         self.populate_suns()
         self.populate_moons()
+        self.update_live_preview()
+
+    def update_live_preview(self):
+        # Clear grid
+        for i in reversed(range(self.preview_grid.count())):
+            widget = self.preview_grid.itemAt(i).widget()
+            if widget:
+                widget.setParent(None)
+
+        world = self.main_window.world
+        if not world.months:
+            self.lbl_preview_info.setText("No months defined.")
+            return
+
+        m0 = world.months[0]
+        self.lbl_preview_info.setText(f"Month 1: {m0.name} ({m0.days} days)")
+
+        # Weekdays header
+        week_len = len(world.weekdays)
+        cols = week_len if week_len > 0 else 7
+        if week_len > 0:
+            for i, wd in enumerate(world.weekdays):
+                lbl = QLabel(wd.name[:3])
+                lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+                lbl.setStyleSheet("font-size: 11px; font-weight: bold; color: #a6adc8;")
+                self.preview_grid.addWidget(lbl, 0, i)
+
+        row, col = 1, 0
+        for day in range(1, min(m0.days + 1, 32)): # Limit mini preview to max 31 days for compactness
+            btn = QPushButton(str(day))
+            btn.setFixedSize(28, 28)
+            btn.setStyleSheet(f"background-color: {m0.color}; font-size: 10px;")
+            self.preview_grid.addWidget(btn, row, col)
+            col += 1
+            if col >= cols:
+                col = 0
+                row += 1
 
 
     def export_timeline(self):
@@ -159,6 +223,56 @@ class EditorWidget(QWidget):
                 QMessageBox.information(self, "Success", "Project saved successfully!")
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Failed to save:\n{e}")
+
+    def load_sample_world(self):
+        import os
+        from cce.core.storage import load_world
+        from cce.gui.app import get_resource_path
+
+        sample_path = get_resource_path(os.path.join("assets", "samples", "eldoria.worldcal"))
+        if os.path.exists(sample_path):
+            try:
+                self.main_window.world = load_world(sample_path)
+                self.main_window.mark_saved()
+                self.refresh_view()
+                QMessageBox.information(self, "Sample World Loaded", "Loaded sample world: 'Kingdom of Eldoria'!\nClick 'Generate Calendar' to explore.")
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Failed to load sample world:\n{e}")
+        else:
+            QMessageBox.warning(self, "Not Found", f"Sample world file not found at: {sample_path}")
+
+    def open_preset_wizard(self):
+        from cce.core.presets import PRESETS
+        from PyQt6.QtWidgets import QDialog, QListWidget, QDialogButtonBox, QVBoxLayout, QLabel
+
+        dialog = QDialog(self)
+        dialog.setWindowTitle(translator.t("btn_presets"))
+        dialog.resize(450, 300)
+
+        dlg_layout = QVBoxLayout(dialog)
+        lbl = QLabel("Choose a world preset to quickly bootstrap your calendar:")
+        lbl.setWordWrap(True)
+        dlg_layout.addWidget(lbl)
+
+        preset_list = QListWidget()
+        for key in PRESETS.keys():
+            preset_list.addItem(key)
+        preset_list.setCurrentRow(0)
+        dlg_layout.addWidget(preset_list)
+
+        btn_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        dlg_layout.addWidget(btn_box)
+
+        btn_box.accepted.connect(dialog.accept)
+        btn_box.rejected.connect(dialog.reject)
+
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            selected = preset_list.currentItem()
+            if selected and selected.text() in PRESETS:
+                self.main_window.world = PRESETS[selected.text()]()
+                self.main_window.mark_unsaved()
+                self.refresh_view()
+                QMessageBox.information(self, "Template Applied", f"Successfully loaded template: {selected.text()}")
 
     def open_project(self):
         if not self.main_window.check_unsaved_changes():
@@ -313,6 +427,36 @@ class EditorWidget(QWidget):
         group_layout.addLayout(btn_layout)
 
         layout.addWidget(group)
+
+        # Quick Day Length Calculator Group
+        calc_group = QGroupBox(translator.t("day_calc_title"))
+        calc_layout = QHBoxLayout(calc_group)
+
+        self.spin_hours_per_day = QSpinBox()
+        self.spin_hours_per_day.setRange(1, 1000)
+        self.spin_hours_per_day.setValue(24)
+
+        self.spin_mins_per_hour = QSpinBox()
+        self.spin_mins_per_hour.setRange(1, 1000)
+        self.spin_mins_per_hour.setValue(60)
+
+        self.spin_secs_per_min = QSpinBox()
+        self.spin_secs_per_min.setRange(1, 1000)
+        self.spin_secs_per_min.setValue(60)
+
+        btn_apply_calc = QPushButton(translator.t("btn_apply_calc"))
+        btn_apply_calc.clicked.connect(self.apply_quick_day_length)
+
+        calc_layout.addWidget(QLabel(translator.t("lbl_hours_day")))
+        calc_layout.addWidget(self.spin_hours_per_day)
+        calc_layout.addWidget(QLabel(translator.t("lbl_mins_hour")))
+        calc_layout.addWidget(self.spin_mins_per_hour)
+        calc_layout.addWidget(QLabel(translator.t("lbl_secs_min")))
+        calc_layout.addWidget(self.spin_secs_per_min)
+        calc_layout.addWidget(btn_apply_calc)
+
+        layout.addWidget(calc_group)
+
         self.planets_table.itemChanged.connect(self.update_planets)
 
     def populate_planets(self):
@@ -332,6 +476,16 @@ class EditorWidget(QWidget):
     def add_planet(self):
         self.main_window.world.planets.append(Planet(name="New Planet"))
         self.populate_planets()
+
+    def apply_quick_day_length(self):
+        engine = TimeEngine(self.main_window.world)
+        p = engine.get_primary_planet()
+        if p:
+            tot = self.spin_hours_per_day.value() * self.spin_mins_per_hour.value() * self.spin_secs_per_min.value()
+            p.day_length_ticks = tot
+            self.populate_planets()
+            self.main_window.mark_unsaved()
+            QMessageBox.information(self, "Success", f"Set primary planet '{p.name}' day length to {tot} ticks ({self.spin_hours_per_day.value()} hours).")
 
     def remove_planet(self):
         row = self.planets_table.currentRow()
@@ -485,6 +639,7 @@ class EditorWidget(QWidget):
             self.month_table.setItem(r, 1, QTableWidgetItem(str(m.days)))
             self.month_table.setItem(r, 2, QTableWidgetItem(m.color))
         self.month_table.blockSignals(False)
+        self.update_live_preview()
 
     def update_months(self):
         for r in range(self.month_table.rowCount()):
@@ -505,6 +660,7 @@ class EditorWidget(QWidget):
         for r, w in enumerate(self.main_window.world.weekdays):
             self.weekday_table.setItem(r, 0, QTableWidgetItem(w.name))
         self.weekday_table.blockSignals(False)
+        self.update_live_preview()
 
     def update_weekdays(self):
         for r in range(self.weekday_table.rowCount()):

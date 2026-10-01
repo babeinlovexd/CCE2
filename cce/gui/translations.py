@@ -5,9 +5,12 @@ LANGUAGES = {
         # App Level
         "menu_language": "Language",
 
+        # Live Preview
+        "live_preview_title": "🔍 Live Calendar Preview",
         # Editor Top Bar
         "btn_save": "Save Project",
         "btn_open": "Open Project",
+        "btn_presets": "🧙‍♂️ World Templates",
         "btn_generate": "🚀 Generate Calendar & Open Viewer",
 
         # Editor Tabs
@@ -41,6 +44,7 @@ LANGUAGES = {
         # New Features
         "btn_ev_delete": "Delete Event",
         "btn_export_img": "Export Image",
+        "btn_sample": "🌟 Sample World",
         "btn_export": "Export Timeline",
         "warn_unsaved_title": "Unsaved Changes",
         "warn_unsaved_msg": "You have unsaved changes. Are you sure you want to proceed without saving?",
@@ -57,6 +61,11 @@ LANGUAGES = {
         "tt_day_length": "How many base ticks make up one full day on this planet.",
         "tt_year_length": "How many full days make up one orbital year on this planet.",
         "tt_is_primary": "The main planet used as the reference point for the Calendar Viewer.",
+        "day_calc_title": "⚡ Easy Day Length Calculator",
+        "lbl_hours_day": "Hours/Day:",
+        "lbl_mins_hour": "Mins/Hour:",
+        "lbl_secs_min": "Secs/Min:",
+        "btn_apply_calc": "Apply to Primary Planet",
 
         # Calendar Tab
         "lbl_eras": "Eras",
@@ -147,9 +156,13 @@ LANGUAGES = {
         # App Level
         "menu_language": "Sprache",
 
+        # Live Preview
+        "live_preview_title": "🔍 Live-Kalender-Vorschau",
         # Editor Top Bar
         "btn_save": "Projekt Speichern",
         "btn_open": "Projekt Öffnen",
+        "btn_presets": "🧙‍♂️ Welt-Vorlagen",
+        "btn_sample": "🌟 Beispiel-Welt",
         "btn_generate": "🚀 Kalender generieren & ansehen",
 
         # Editor Tabs
@@ -199,6 +212,11 @@ LANGUAGES = {
         "tt_day_length": "Aus wie vielen Basis-Ticks ein ganzer Tag auf diesem Planeten besteht.",
         "tt_year_length": "Wie viele ganze Tage ein volles Umlauf-Jahr auf diesem Planeten ergeben.",
         "tt_is_primary": "Der primäre Planet, dessen Kalender im Viewer standardmäßig angezeigt wird.",
+        "day_calc_title": "⚡ Einfacher Tageslängen-Rechner",
+        "lbl_hours_day": "Stunden/Tag:",
+        "lbl_mins_hour": "Min/Stunde:",
+        "lbl_secs_min": "Sek/Minute:",
+        "btn_apply_calc": "Auf Hauptplanet anwenden",
 
         # Calendar Tab
         "lbl_eras": "Epochen / Zeitalter",

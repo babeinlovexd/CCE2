@@ -1,0 +1,205 @@
+{
+  "id": "acb2abb8-43c5-46e9-94a7-0e184d44c601",
+  "name": "Kingdom of Eldoria",
+  "base_tick_name": "Second",
+  "earth_sync_enabled": false,
+  "earth_epoch_iso": "2000-01-01T00:00:00",
+  "real_seconds_per_tick": 1.0,
+  "time_units": [
+    {
+      "id": "01378345-f059-4fce-886a-a49774dbaec5",
+      "name": "Hour",
+      "abbreviation": "h",
+      "ticks": 3600
+    },
+    {
+      "id": "eca3b70c-f948-4369-a1ac-28149245932e",
+      "name": "Minute",
+      "abbreviation": "m",
+      "ticks": 60
+    }
+  ],
+  "planets": [
+    {
+      "id": "36d97b00-4b35-4f91-abb0-e641899e1a44",
+      "name": "Aethelgard",
+      "day_length_ticks": 86400,
+      "year_length_days": 360,
+      "is_primary": true
+    }
+  ],
+  "eras": [
+    {
+      "id": "3330f275-6f4d-4337-8064-ac4529c2d631",
+      "name": "Age of Dragons",
+      "abbreviation": "AD",
+      "start_year": 1,
+      "includes_year_zero": false
+    }
+  ],
+  "months": [
+    {
+      "id": "0a394c1b-348c-4305-96cf-8fbcbfb71bb5",
+      "name": "Frostreach",
+      "days": 30,
+      "color": "#89b4fa"
+    },
+    {
+      "id": "25ed9935-927b-457b-805d-f7f9cf2133b4",
+      "name": "Thawmel",
+      "days": 30,
+      "color": "#89b4fa"
+    },
+    {
+      "id": "f21d4fe0-8c8c-4cf8-8580-fa3f4ca7d924",
+      "name": "Bloomtide",
+      "days": 30,
+      "color": "#a6e3a1"
+    },
+    {
+      "id": "d21cec23-8674-4e23-a611-21ec45841855",
+      "name": "Sunpeak",
+      "days": 30,
+      "color": "#f9e2af"
+    },
+    {
+      "id": "1baf37db-f9c3-484d-a431-c2954d0cb802",
+      "name": "Highsummer",
+      "days": 30,
+      "color": "#fab387"
+    },
+    {
+      "id": "71278b12-348d-42fc-8ef0-1f9c32c05341",
+      "name": "Goldleaf",
+      "days": 30,
+      "color": "#f38ba8"
+    },
+    {
+      "id": "fd12a4cd-6230-413f-a5ca-80c0323f75b6",
+      "name": "Harvestide",
+      "days": 30,
+      "color": "#cba6f7"
+    },
+    {
+      "id": "2cc92975-cf2c-40e5-b902-6040400c6cab",
+      "name": "Emberfall",
+      "days": 30,
+      "color": "#f2cdcd"
+    },
+    {
+      "id": "0db6069a-8884-4788-afa3-b2950afc369b",
+      "name": "Shadowsown",
+      "days": 30,
+      "color": "#b4befe"
+    },
+    {
+      "id": "1261e90c-7aad-4b13-a35f-0e923a9e9ea9",
+      "name": "Frostfall",
+      "days": 30,
+      "color": "#74c7ec"
+    },
+    {
+      "id": "1e89a40b-0d6a-4fbf-b778-2aa17d60eb78",
+      "name": "Deepwinter",
+      "days": 30,
+      "color": "#89dceb"
+    },
+    {
+      "id": "c27a1883-0e12-42f1-97c1-bd3de966554e",
+      "name": "Yearsend",
+      "days": 30,
+      "color": "#313244"
+    }
+  ],
+  "weekdays": [
+    {
+      "id": "ae5b03bd-0110-47dd-aa0f-e405fa14c8cd",
+      "name": "Moonday"
+    },
+    {
+      "id": "8b2be8ed-d8bd-4e7c-acbb-79a92ef10e4a",
+      "name": "Towerday"
+    },
+    {
+      "id": "15a831a3-7cb3-4c9d-ae9f-4939f9e06e76",
+      "name": "Windday"
+    },
+    {
+      "id": "099f26e0-3a12-4f79-92d5-64df9c5cfeb9",
+      "name": "Thunderday"
+    },
+    {
+      "id": "2b275044-362b-403a-ba43-51b61fc49d37",
+      "name": "Fireday"
+    },
+    {
+      "id": "53d1b0bc-fe27-4796-92ac-cb5232686961",
+      "name": "Starday"
+    },
+    {
+      "id": "8964fae9-be95-4c1c-9c24-59bb90edd783",
+      "name": "Sunnday"
+    }
+  ],
+  "holidays": [],
+  "leap_rules": [
+    {
+      "id": "c6c851d8-c728-4bd7-aa6f-5c687f2da95f",
+      "interval_years": 4,
+      "month_id_to_append": "c27a1883-0e12-42f1-97c1-bd3de966554e",
+      "days_to_add": 1,
+      "exclude_interval": 0,
+      "force_include_interval": 0
+    }
+  ],
+  "suns": [
+    {
+      "id": "0a287e4b-3e54-41d0-bd22-36f38417b8be",
+      "name": "Solarius",
+      "twilight_dawn_ticks": 21600,
+      "twilight_dusk_ticks": 64800
+    }
+  ],
+  "moons": [
+    {
+      "id": "7eb8e479-e93d-48d2-8858-061464edce49",
+      "name": "Lunaria",
+      "cycle_days": 28.0,
+      "phase_offset": 0.0
+    }
+  ],
+  "events": [
+    {
+      "id": "3c43afdc-6b8e-4a62-8cd3-fc7096b47687",
+      "title": "Coronation of King Alden",
+      "start_tick": 1296000,
+      "end_tick": 1382400,
+      "characters": [
+        "King Alden",
+        "Queen Elena"
+      ],
+      "location": "Eldoria Castle",
+      "category": "",
+      "color": "#89b4fa",
+      "notes": "Grand celebration across all provinces.",
+      "is_recurring": false,
+      "recurrence_interval_days": 365
+    },
+    {
+      "id": "74a8bac4-42b8-4c4f-986c-ecf39c410058",
+      "title": "Dragon Attack on Oakhaven",
+      "start_tick": 3888000,
+      "end_tick": 4060800,
+      "characters": [
+        "Sir Gareth",
+        "Ignis the Dragon"
+      ],
+      "location": "Oakhaven",
+      "category": "",
+      "color": "#89b4fa",
+      "notes": "Fire dragon spotted near the southern forest.",
+      "is_recurring": false,
+      "recurrence_interval_days": 365
+    }
+  ]
+}
