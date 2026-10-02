@@ -118,6 +118,9 @@ class MainWindow(QMainWindow):
             event.ignore()
 
     def switch_language(self, lang_code):
+        if hasattr(self, 'editor_widget') and self.editor_widget:
+            self.editor_widget.flush_state_to_model()
+
         translator.set_language(lang_code)
         self.lang_menu.setTitle(translator.t("menu_language"))
 

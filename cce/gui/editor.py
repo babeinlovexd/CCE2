@@ -210,14 +210,21 @@ class EditorWidget(QWidget):
             QMessageBox.critical(self, "Error", f"Failed to export:\n{e}")
 
     def flush_state_to_model(self):
-        self.main_window.world.earth_sync_enabled = self.chk_earth_sync.isChecked()
-        dt_str = self.earth_epoch_input.text().strip()
-        if len(dt_str) == 10: dt_str += "T00:00:00"
-        self.main_window.world.earth_epoch_iso = dt_str
-        try:
-            self.main_window.world.real_seconds_per_tick = float(self.real_seconds_input.text())
-        except ValueError:
-            pass
+        if hasattr(self, 'world_name_input') and self.world_name_input:
+            self.main_window.world.name = self.world_name_input.text()
+        if hasattr(self, 'base_tick_input') and self.base_tick_input:
+            self.main_window.world.base_tick_name = self.base_tick_input.text()
+        if hasattr(self, 'chk_earth_sync') and self.chk_earth_sync:
+            self.main_window.world.earth_sync_enabled = self.chk_earth_sync.isChecked()
+        if hasattr(self, 'earth_epoch_input') and self.earth_epoch_input:
+            dt_str = self.earth_epoch_input.text().strip()
+            if len(dt_str) == 10: dt_str += "T00:00:00"
+            self.main_window.world.earth_epoch_iso = dt_str
+        if hasattr(self, 'real_seconds_input') and self.real_seconds_input:
+            try:
+                self.main_window.world.real_seconds_per_tick = float(self.real_seconds_input.text())
+            except ValueError:
+                pass
 
     def save_project(self):
         # Update basic info before saving
@@ -337,8 +344,8 @@ class EditorWidget(QWidget):
 
         # Connect signals
         self.chk_earth_sync.stateChanged.connect(self.update_earth_sync_state)
-        self.world_name_input.textChanged.connect(lambda: self.main_window.mark_unsaved())
-        self.base_tick_input.textChanged.connect(lambda: self.main_window.mark_unsaved())
+        self.world_name_input.textChanged.connect(lambda t: (setattr(self.main_window.world, 'name', t), self.main_window.mark_unsaved()))
+        self.base_tick_input.textChanged.connect(lambda t: (setattr(self.main_window.world, 'base_tick_name', t), self.main_window.mark_unsaved()))
         self.earth_epoch_input.textChanged.connect(lambda: self.main_window.mark_unsaved())
         self.real_seconds_input.textChanged.connect(lambda: self.main_window.mark_unsaved())
 
