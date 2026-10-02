@@ -152,15 +152,12 @@ class EditorWidget(QWidget):
 
     def export_timeline(self):
         from cce.core.exporter import export_to_ical, export_to_csv, export_to_json
+        from cce.core.pdf_exporter import generate_printable_html_calendar
 
         self.flush_state_to_model()
 
-        if not self.main_window.world.events:
-            QMessageBox.information(self, "Export", "No events to export.")
-            return
-
-        filters = "iCalendar Files (*.ics);;CSV Files (*.csv);;JSON Files (*.json);;Markdown Files (*.md);;Text Files (*.txt);;All Files (*)"
-        fname, selected_filter = QFileDialog.getSaveFileName(self, translator.t("btn_export"), "timeline.ics", filters)
+        filters = "Printable Calendar HTML (*.html);;iCalendar Files (*.ics);;CSV Files (*.csv);;JSON Files (*.json);;Markdown Files (*.md);;Text Files (*.txt);;All Files (*)"
+        fname, selected_filter = QFileDialog.getSaveFileName(self, translator.t("btn_export"), "calendar.html", filters)
         if not fname:
             return
 
@@ -168,14 +165,15 @@ class EditorWidget(QWidget):
         p_planet = engine.get_primary_planet()
 
         try:
-            if fname.endswith(".ics") or "iCalendar" in selected_filter:
+            if fname.endswith(".html") or "HTML" in selected_filter:
+                content = generate_printable_html_calendar(self.main_window.world, year=0)
+            elif fname.endswith(".ics") or "iCalendar" in selected_filter:
                 content = export_to_ical(self.main_window.world)
             elif fname.endswith(".csv") or "CSV" in selected_filter:
                 content = export_to_csv(self.main_window.world)
             elif fname.endswith(".json") or "JSON" in selected_filter:
                 content = export_to_json(self.main_window.world)
             else:
-                # Default Markdown format
                 sorted_events = sorted(self.main_window.world.events, key=lambda e: e.start_tick)
                 md_lines = [f"# Timeline: {self.main_window.world.name}\n"]
                 for ev in sorted_events:
@@ -194,9 +192,11 @@ class EditorWidget(QWidget):
 
                     chars = f"**Characters:** {', '.join(ev.characters)}\n" if ev.characters else ""
                     loc = f"**Location:** {ev.location}\n" if ev.location else ""
+                    ch_str = f"**Chapter:** {ev.chapter}\n" if getattr(ev, 'chapter', None) else ""
 
                     md_lines.append(f"## {ev.title}")
                     md_lines.append(f"**Date:** {date_str}{earth_str}\n")
+                    if ch_str: md_lines.append(ch_str)
                     if chars: md_lines.append(chars)
                     if loc: md_lines.append(loc)
                     if ev.notes: md_lines.append(f"\n{ev.notes}\n")

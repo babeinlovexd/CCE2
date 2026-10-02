@@ -7,6 +7,7 @@ from PyQt6.QtCore import Qt
 
 from cce.core.engine import TimeEngine
 from cce.core.astronomy import AstronomyModel
+from cce.core.weather import generate_daily_weather
 from cce.core.models import Event
 from .translations import translator
 from PyQt6.QtCore import QMimeData
@@ -216,10 +217,14 @@ class ViewerWidget(QWidget):
         self.lbl_earth_date.setStyleSheet("color: #a6e3a1; font-weight: bold;")
         self.lbl_earth_date.setVisible(False)
 
+        self.lbl_weather_info = QLabel("")
+        self.lbl_weather_info.setStyleSheet("color: #f9e2af; font-weight: bold;")
+
         self.lbl_astro_info = QLabel("")
         self.lbl_astro_info.setWordWrap(True)
         details_layout.addWidget(self.lbl_day_title)
         details_layout.addWidget(self.lbl_earth_date)
+        details_layout.addWidget(self.lbl_weather_info)
         details_layout.addWidget(self.lbl_astro_info)
 
         # Events List Group
@@ -247,6 +252,8 @@ class ViewerWidget(QWidget):
         self.ev_chars = QLineEdit()
         self.ev_chars.setToolTip(translator.t("tt_ev_chars"))
         self.ev_loc = QLineEdit()
+        self.ev_chapter = QLineEdit()
+        self.ev_chapter.setPlaceholderText("e.g. Chapter 1: The Departure")
 
         # Categories & Color
         self.ev_cat_layout = QHBoxLayout()
@@ -261,12 +268,15 @@ class ViewerWidget(QWidget):
                 # Recurrence
         self.ev_rec_layout = QHBoxLayout()
         self.chk_recurring = QCheckBox("Repeat every")
+        self.combo_rec_type = QComboBox()
+        self.combo_rec_type.addItems(["Interval Days", "Yearly Anniversary"])
         self.spin_recur_interval = QSpinBox()
         self.spin_recur_interval.setMinimum(1)
         self.spin_recur_interval.setMaximum(99999)
         self.spin_recur_interval.setValue(365)
         self.spin_recur_interval.setSuffix(" " + translator.t("ev_days"))
         self.ev_rec_layout.addWidget(self.chk_recurring)
+        self.ev_rec_layout.addWidget(self.combo_rec_type)
         self.ev_rec_layout.addWidget(self.spin_recur_interval)
 
         self.ev_notes = QTextEdit()
@@ -279,6 +289,7 @@ class ViewerWidget(QWidget):
         self.ev_layout.addRow(translator.t("ev_category"), self.ev_cat_layout)
         self.ev_layout.addRow(translator.t("ev_chars"), self.ev_chars)
         self.ev_layout.addRow(translator.t("ev_loc"), self.ev_loc)
+        self.ev_layout.addRow("Chapter / Story Tag:", self.ev_chapter)
         self.ev_layout.addRow(translator.t("ev_notes"), self.ev_notes)
 
         btn_ev_layout = QHBoxLayout()
@@ -325,7 +336,13 @@ class ViewerWidget(QWidget):
                 return True
 
         if getattr(ev, 'is_recurring', False) and ev_start < day_end_tick:
-            interval_days = getattr(ev, 'recurrence_interval_days', 365)
+            rec_type = getattr(ev, 'recurrence_type', 'interval_days')
+            p_planet = self.engine.get_primary_planet() if self.engine else None
+            if rec_type == 'yearly':
+                interval_days = p_planet.year_length_days if p_planet and p_planet.year_length_days > 0 else 365
+            else:
+                interval_days = getattr(ev, 'recurrence_interval_days', 365)
+
             if interval_days > 0:
                 interval_ticks = interval_days * day_length_ticks
                 start_of_event_day = ev_start - (ev_start % day_length_ticks)
@@ -663,6 +680,10 @@ class ViewerWidget(QWidget):
         else:
             self.lbl_earth_date.setVisible(False)
 
+        # Weather Info
+        weather = generate_daily_weather(self.main_window.world.id, date_info['year'], m_name, date_info['day_of_month'])
+        self.lbl_weather_info.setText(f"Weather: {weather['icon']} {weather['condition']} ({weather['temp_c']}°C)")
+
         # Astro Info
         astro_text = []
         for moon in self.main_window.world.moons:
@@ -734,6 +755,7 @@ class ViewerWidget(QWidget):
 
                 self.ev_chars.setText(", ".join(ev.characters))
                 self.ev_loc.setText(ev.location)
+                self.ev_chapter.setText(getattr(ev, 'chapter', ''))
                 self.ev_notes.setText(ev.notes)
 
                 cat = getattr(ev, "category", "")
@@ -753,6 +775,8 @@ class ViewerWidget(QWidget):
                 is_rec = getattr(ev, 'is_recurring', False)
                 self.chk_recurring.setChecked(is_rec)
                 self.spin_recur_interval.setValue(getattr(ev, 'recurrence_interval_days', 365))
+                rec_type = getattr(ev, 'recurrence_type', 'interval_days')
+                self.combo_rec_type.setCurrentIndex(1 if rec_type == 'yearly' else 0)
                 self.btn_ev_delete.setVisible(True)
                 break
 
@@ -765,6 +789,7 @@ class ViewerWidget(QWidget):
         self.spin_recur_interval.setValue(365)
         self.ev_chars.clear()
         self.ev_loc.clear()
+        self.ev_chapter.clear()
         self.ev_notes.clear()
         self.ev_category.setCurrentIndex(0)
         self.ev_color.setCurrentIndex(0)
@@ -792,9 +817,13 @@ class ViewerWidget(QWidget):
 
         self.current_event.characters = [c.strip() for c in self.ev_chars.text().split(",") if c.strip()]
         self.current_event.location = self.ev_loc.text()
+        self.current_event.chapter = self.ev_chapter.text()
         self.current_event.category = self.ev_category.currentText()
         self.current_event.color = self.ev_color.currentText()
         self.current_event.notes = self.ev_notes.toPlainText()
+        self.current_event.is_recurring = self.chk_recurring.isChecked()
+        self.current_event.recurrence_type = "yearly" if self.combo_rec_type.currentIndex() == 1 else "interval_days"
+        self.current_event.recurrence_interval_days = self.spin_recur_interval.value()
         self.main_window.mark_unsaved()
 
         p_planet = self.engine.get_primary_planet()

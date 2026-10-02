@@ -78,8 +78,10 @@ class Event:
     location: str = ""
     category: str = ""
     color: str = "#89b4fa"
+    chapter: str = ""
     notes: str = ""
     is_recurring: bool = False
+    recurrence_type: str = "interval_days"
     recurrence_interval_days: int = 365
 
 @dataclass
