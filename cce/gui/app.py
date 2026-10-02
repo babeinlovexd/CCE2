@@ -1,6 +1,6 @@
 import os
 import sys
-from PyQt6.QtWidgets import QApplication, QMainWindow, QStackedWidget, QWidget, QVBoxLayout, QPushButton, QHBoxLayout, QMenuBar, QLabel, QMessageBox
+from PyQt6.QtWidgets import QApplication, QMainWindow, QStackedWidget, QWidget, QVBoxLayout, QPushButton, QHBoxLayout, QMenuBar, QLabel, QMessageBox, QScrollArea, QFrame
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon, QPixmap
 
@@ -25,7 +25,8 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Chronix")
-        self.resize(1200, 800)
+        self.resize(1000, 680)
+        self.setMinimumSize(600, 450)
 
         icon_path = get_resource_path(os.path.join("assets", "chronix_logo.png"))
         if os.path.exists(icon_path):
@@ -60,7 +61,12 @@ class MainWindow(QMainWindow):
         self.stack.addWidget(self.editor_widget)
         self.stack.addWidget(self.viewer_widget)
 
-        self.layout.addWidget(self.stack)
+        main_scroll = QScrollArea()
+        main_scroll.setWidgetResizable(True)
+        main_scroll.setFrameShape(QFrame.Shape.NoFrame)
+        main_scroll.setWidget(self.stack)
+
+        self.layout.addWidget(main_scroll)
 
 
     def create_menu_bar(self):

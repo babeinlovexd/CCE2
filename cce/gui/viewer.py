@@ -302,7 +302,7 @@ class ViewerWidget(QWidget):
 
         right_panel = QWidget()
         right_panel.setLayout(details_layout)
-        right_panel.setMinimumWidth(350)
+        right_panel.setMinimumWidth(260)
         content_layout.addWidget(right_panel, 1)
 
         self.layout.addLayout(content_layout)
