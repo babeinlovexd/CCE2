@@ -104,7 +104,8 @@ QPushButton.calendar-day {
     background-color: #313244;
     border: 1px solid #45475a;
     border-radius: 6px;
-    font-size: 14px;
+    padding: 2px 4px;
+    font-size: 13px;
 }
 QPushButton.calendar-day:hover {
     border: 2px solid #00c0f0;
@@ -114,12 +115,16 @@ QPushButton.calendar-day-event {
     border: 2px solid #f38ba8;
     color: #f38ba8;
     font-weight: bold;
+    padding: 2px 4px;
+    font-size: 13px;
 }
 QPushButton.calendar-day-search {
     background-color: #f9e2af;
     color: #100020;
     border: 2px solid #fab387;
     font-weight: bold;
+    padding: 2px 4px;
+    font-size: 13px;
 }
 
 /* Inputs */
