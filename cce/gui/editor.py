@@ -64,6 +64,7 @@ class EditorWidget(QWidget):
 
         # Live Preview Panel
         preview_group = QGroupBox(translator.t("live_preview_title"))
+        preview_group.setFixedWidth(280)
         preview_layout = QVBoxLayout(preview_group)
 
         self.lbl_preview_info = QLabel("")

@@ -226,6 +226,7 @@ class ViewerWidget(QWidget):
         group_list = QGroupBox(translator.t("lbl_events"))
         list_layout = QVBoxLayout(group_list)
         self.event_list = EventListWidget(self)
+        self.event_list.setMinimumHeight(150)
         self.event_list.itemClicked.connect(self.load_event)
         list_layout.addWidget(self.event_list)
         details_layout.addWidget(group_list, 1) # Give it stretch
