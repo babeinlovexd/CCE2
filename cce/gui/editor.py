@@ -746,26 +746,47 @@ class EditorWidget(QWidget):
     def populate_holidays(self):
         self.holiday_table.blockSignals(True)
         self.holiday_table.setRowCount(len(self.main_window.world.holidays))
+        month_options = ["-- Intercalary / Outside Month --"] + [m.name for m in self.main_window.world.months]
+
         for r, h in enumerate(self.main_window.world.holidays):
             self.holiday_table.setItem(r, 0, QTableWidgetItem(h.name))
 
-            # Simple approach for now: put month ID or blank
-            month_name = ""
+            # Month Dropdown
+            combo = QComboBox()
+            combo.addItems(month_options)
+
+            current_month_name = ""
             if h.month_id:
                 for m in self.main_window.world.months:
-                    if m.id == h.month_id:
-                        month_name = m.name
+                    if m.id == h.month_id or m.name == h.month_id:
+                        current_month_name = m.name
                         break
-            if not month_name:
-                month_name = h.month_id if h.month_id else ""
 
-            self.holiday_table.setItem(r, 1, QTableWidgetItem(month_name))
+            if current_month_name in month_options:
+                combo.setCurrentIndex(month_options.index(current_month_name))
+            else:
+                combo.setCurrentIndex(0)
+
+            combo.currentIndexChanged.connect(lambda idx, row=r: self._on_holiday_month_changed(row, idx))
+            self.holiday_table.setCellWidget(r, 1, combo)
+
             self.holiday_table.setItem(r, 2, QTableWidgetItem(str(h.day_in_month)))
             chk = QTableWidgetItem()
             chk.setFlags(Qt.ItemFlag.ItemIsUserCheckable | Qt.ItemFlag.ItemIsEnabled)
             chk.setCheckState(Qt.CheckState.Checked if h.counts_as_weekday else Qt.CheckState.Unchecked)
             self.holiday_table.setItem(r, 3, chk)
         self.holiday_table.blockSignals(False)
+
+    def _on_holiday_month_changed(self, row: int, idx: int):
+        if row < len(self.main_window.world.holidays):
+            h = self.main_window.world.holidays[row]
+            if idx == 0:
+                h.month_id = None
+            else:
+                m_idx = idx - 1
+                if m_idx < len(self.main_window.world.months):
+                    h.month_id = self.main_window.world.months[m_idx].id
+            self.main_window.mark_unsaved()
 
     def remove_holiday(self):
         row = self.holiday_table.currentRow()
@@ -786,19 +807,6 @@ class EditorWidget(QWidget):
         h = self.main_window.world.holidays[r]
         h.name = self._cell_text(self.holiday_table, r, 0)
 
-        m_name = self._cell_text(self.holiday_table, r, 1)
-        if not m_name:
-            h.month_id = None
-        else:
-            found = False
-            for m in self.main_window.world.months:
-                if m.name == m_name:
-                    h.month_id = m.id
-                    found = True
-                    break
-            if not found:
-                h.month_id = m_name
-
         try:
             h.day_in_month = int(self._cell_text(self.holiday_table, r, 2, "1"))
         except ValueError:
@@ -811,13 +819,45 @@ class EditorWidget(QWidget):
     def populate_leap_rules(self):
         self.leap_table.blockSignals(True)
         self.leap_table.setRowCount(len(self.main_window.world.leap_rules))
+        month_options = ["-- Default / End of Year --"] + [m.name for m in self.main_window.world.months]
+
         for r, l in enumerate(self.main_window.world.leap_rules):
             self.leap_table.setItem(r, 0, QTableWidgetItem(str(l.interval_years)))
-            self.leap_table.setItem(r, 1, QTableWidgetItem(l.month_id_to_append))
+
+            # Month Dropdown
+            combo = QComboBox()
+            combo.addItems(month_options)
+
+            current_month_name = ""
+            if l.month_id_to_append:
+                for m in self.main_window.world.months:
+                    if m.id == l.month_id_to_append or m.name == l.month_id_to_append:
+                        current_month_name = m.name
+                        break
+
+            if current_month_name in month_options:
+                combo.setCurrentIndex(month_options.index(current_month_name))
+            else:
+                combo.setCurrentIndex(0)
+
+            combo.currentIndexChanged.connect(lambda idx, row=r: self._on_leap_month_changed(row, idx))
+            self.leap_table.setCellWidget(r, 1, combo)
+
             self.leap_table.setItem(r, 2, QTableWidgetItem(str(l.days_to_add)))
             self.leap_table.setItem(r, 3, QTableWidgetItem(str(l.exclude_interval)))
             self.leap_table.setItem(r, 4, QTableWidgetItem(str(l.force_include_interval)))
         self.leap_table.blockSignals(False)
+
+    def _on_leap_month_changed(self, row: int, idx: int):
+        if row < len(self.main_window.world.leap_rules):
+            l = self.main_window.world.leap_rules[row]
+            if idx == 0:
+                l.month_id_to_append = ""
+            else:
+                m_idx = idx - 1
+                if m_idx < len(self.main_window.world.months):
+                    l.month_id_to_append = self.main_window.world.months[m_idx].id
+            self.main_window.mark_unsaved()
 
     def update_leap_rules(self):
         for r in range(self.leap_table.rowCount()):
@@ -826,7 +866,6 @@ class EditorWidget(QWidget):
             l = self.main_window.world.leap_rules[r]
             try:
                 l.interval_years = int(self._cell_text(self.leap_table, r, 0, "0"))
-                l.month_id_to_append = self._cell_text(self.leap_table, r, 1)
                 l.days_to_add = int(self._cell_text(self.leap_table, r, 2, "0"))
                 l.exclude_interval = int(self._cell_text(self.leap_table, r, 3, "0"))
                 l.force_include_interval = int(self._cell_text(self.leap_table, r, 4, "0"))
