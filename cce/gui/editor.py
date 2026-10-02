@@ -243,6 +243,9 @@ class EditorWidget(QWidget):
                 QMessageBox.critical(self, "Error", f"Failed to save:\n{e}")
 
     def load_sample_world(self):
+        if not self.main_window.check_unsaved_changes():
+            return
+
         import os
         from cce.core.storage import load_world
         from cce.gui.app import get_resource_path
@@ -260,6 +263,9 @@ class EditorWidget(QWidget):
             QMessageBox.warning(self, "Not Found", f"Sample world file not found at: {sample_path}")
 
     def open_preset_wizard(self):
+        if not self.main_window.check_unsaved_changes():
+            return
+
         from cce.core.presets import PRESETS
         from PyQt6.QtWidgets import QDialog, QListWidget, QDialogButtonBox, QVBoxLayout, QLabel
 
